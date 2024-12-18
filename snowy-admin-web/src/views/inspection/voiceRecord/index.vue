@@ -72,6 +72,7 @@ import queryForm from './queryForm.vue';
 import insuVoiceRecordApi from '@/api/inspection/insuVoiceRecordApi'
 import translateApi from "@/api/inspection/translateApi"
 import { message } from 'ant-design-vue'
+import Clipboard from "clipboard";
 
 const tableRef = ref()
 const formRef = ref()
@@ -88,7 +89,7 @@ const columns = [
 		title: '录音URL',
 		dataIndex: 'voiceUrl',
 		align: 'center',
-    customRender: ({ text, record }) => {
+    customRender: ({ record }) => {
       const url = record.voiceUrl;
       if (url && url.length > 20) {
         const start = url.slice(0, 10);
@@ -111,6 +112,21 @@ const columns = [
           onMouseleave: () => {
             const tooltips = document.querySelectorAll('div[style*="position: absolute;"]');
             tooltips.forEach((tooltip) => tooltip.remove());
+          },
+          onClick: () => {
+            const clipboard = new Clipboard('.url-display-wrapper', {
+              text: () => url
+            });
+            clipboard.on('success', () => {
+              console.log('已复制到剪贴板');
+              message.success("复制成功");
+              clipboard.destroy();
+            });
+            clipboard.on('error', (err) => {
+              console.error('复制到剪贴板失败', err);
+              message.error("复制失败");
+              clipboard.destroy();
+            });
           },
           class: 'url-display-wrapper'
         }, shortUrl);
@@ -284,8 +300,8 @@ const deleteBatchInsuVoiceRecord = (params) => {
 }
 </script>
 
-<style scoped>
-.url-display-wrapper {
+<style>
+.url-display-wrapper{
   max-width: 200px; /* 设置最大宽度，避免过长的简短 URL 撑开表格单元格 */
   overflow: hidden; /* 超出部分隐藏 */
   text-overflow: ellipsis; /* 显示省略号表示有内容被隐藏 */
