@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vip.xiaonuo.inspection.modular.voiceRecord.mapper.InsuVoiceRecordMapper">
+    <!-- 查询最大 INSU_VOICE_ID -->
+    <select id="selectMaxInsuVoiceId" resultType="Integer">
+        SELECT MAX(INSU_VOICE_ID)
+        FROM insu_voice_record
+    </select>
+
+</mapper>
