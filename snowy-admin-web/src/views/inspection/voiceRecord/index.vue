@@ -99,10 +99,11 @@ const columns = [
           onMouseenter: (e) => {
             const tooltipDiv = document.createElement('div');
             tooltipDiv.textContent = url;
+            tooltipDiv.style.fontSize = '12px';
             tooltipDiv.style.position = 'absolute';
             tooltipDiv.style.backgroundColor = 'white';
             tooltipDiv.style.border = '1px black solid';
-            tooltipDiv.style.padding = '1px';
+            tooltipDiv.style.padding = '3px';
             tooltipDiv.style.zIndex = 1000;
             document.body.appendChild(tooltipDiv);
             const rect = e.target.getBoundingClientRect();
