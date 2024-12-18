@@ -63,7 +63,7 @@
 </template>
 
 <script setup name="voiceRecord">
-import { ref } from 'vue'
+import { ref , h } from 'vue'
 import { cloneDeep } from 'lodash-es'
 
 import Form from './form.vue'
@@ -87,8 +87,36 @@ const columns = [
 	{
 		title: '录音URL',
 		dataIndex: 'voiceUrl',
-		ellipsis: true,
 		align: 'center',
+    customRender: ({ text, record }) => {
+      const url = record.voiceUrl;
+      if (url && url.length > 20) {
+        const start = url.slice(0, 10);
+        const end = url.slice(-10);
+        const shortUrl = `${start}...${end}`;
+        return h('span', {
+          onMouseenter: (e) => {
+            const tooltipDiv = document.createElement('div');
+            tooltipDiv.textContent = url;
+            tooltipDiv.style.position = 'absolute';
+            tooltipDiv.style.backgroundColor = 'white';
+            tooltipDiv.style.border = '1px black solid';
+            tooltipDiv.style.padding = '1px';
+            tooltipDiv.style.zIndex = 1000;
+            document.body.appendChild(tooltipDiv);
+            const rect = e.target.getBoundingClientRect();
+            tooltipDiv.style.top = rect.bottom + 'px';
+            tooltipDiv.style.left = rect.left + 'px';
+          },
+          onMouseleave: () => {
+            const tooltips = document.querySelectorAll('div[style*="position: absolute;"]');
+            tooltips.forEach((tooltip) => tooltip.remove());
+          },
+          class: 'url-display-wrapper'
+        }, shortUrl);
+      }
+      return url;
+    }
 	},
 	{
 		title: '翻译状态',
@@ -154,27 +182,9 @@ const options = {
 const loadData = (parameter) => {
 	return insuVoiceRecordApi.insuVoiceRecordPage(parameter).then((data) => {
 		console.log(data)
-		// const formattedData = formatVoiceUrlData(data);
 		return data;
 	})
 }
-
-// // 数据格式化函数
-// const formatVoiceUrlData = (data) => {
-// 	if (data && data.records) {
-// 		const formattedRecords = data.records.map(record => {
-// 			const formattedRecord = {...record };
-// 			if (formattedRecord.voiceUrl && formattedRecord.voiceUrl.length > 20) {
-// 				const start = formattedRecord.voiceUrl.slice(0, 10);
-// 				const end = formattedRecord.voiceUrl.slice(-10);
-// 				formattedRecord.voiceUrl = `${start}...${end}`;
-// 			}
-// 			return formattedRecord;
-// 		});
-// 		return {...data, records: formattedRecords };
-// 	}
-// 	return data;
-// };
 
 // 翻译操作
 const handleTranslate = (record) => {
@@ -273,3 +283,13 @@ const deleteBatchInsuVoiceRecord = (params) => {
 	})
 }
 </script>
+
+<style scoped>
+.url-display-wrapper {
+  max-width: 200px; /* 设置最大宽度，避免过长的简短 URL 撑开表格单元格 */
+  overflow: hidden; /* 超出部分隐藏 */
+  text-overflow: ellipsis; /* 显示省略号表示有内容被隐藏 */
+  white-space: nowrap; /* 禁止文本换行 */
+  cursor: pointer; /* 鼠标指针变为手型，提示用户可以交互 */
+}
+</style>
