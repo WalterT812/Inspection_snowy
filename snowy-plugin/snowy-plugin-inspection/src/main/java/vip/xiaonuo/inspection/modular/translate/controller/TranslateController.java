@@ -62,18 +62,19 @@ public class TranslateController {
     /**
      * 根据任务ID查询语音转文字任务的结果
      *
-     * @param taskId 任务的ID
+     * @param translateResultParam 任务的ID
      * @return 包含解析后的服务端响应结果的通用结果对象
      */
     @Operation(summary = "根据任务ID查询语音转文字任务的结果")
     @PostMapping("/queryTaskResult")
     public CommonResult<Map<String, Object>> queryTaskResult(@RequestBody TranslateResultParam translateResultParam) {
-        String taskId = translateResultParam.getTaskId();
-        logger.info("查询任务结果, 任务ID: {}", taskId);
+        Integer insuVoiceId = translateResultParam.getInsuVoiceId();
+//        String taskId = translateResultParam.getTaskId();
+        logger.info("查询任务结果, 录音Id: {}", insuVoiceId);
         try {
-            Map<String, Object> resultMap = translateService.queryTaskResult(taskId);
-            logger.info("任务查询成功, 结果: {}", resultMap);
-            return CommonResult.data(resultMap);
+            Map<String, Object> queryResult = translateService.queryTaskResult(insuVoiceId);
+            logger.info("任务查询成功, 结果: {}", queryResult);
+            return CommonResult.data(queryResult);
         } catch (Exception e) {
             logger.error("查询任务失败", e);
             return CommonResult.error("查询失败: " + e.getMessage());

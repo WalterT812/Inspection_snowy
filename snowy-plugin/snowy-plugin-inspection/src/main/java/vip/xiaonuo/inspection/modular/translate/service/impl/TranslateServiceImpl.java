@@ -1,11 +1,11 @@
 package vip.xiaonuo.inspection.modular.translate.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -13,19 +13,19 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
-import vip.xiaonuo.common.exception.CommonException;
 import vip.xiaonuo.common.pojo.CommonResult;
-import vip.xiaonuo.inspection.modular.translate.entity.InsuVoiceDialog;
-import vip.xiaonuo.inspection.modular.translate.mapper.InsuVoiceDialogMapper;
+import vip.xiaonuo.inspection.modular.translate.DTO.SubmitTaskRequestBody;
+import vip.xiaonuo.inspection.modular.translate.entity.InsuVoiceQueryResult;
+import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
+import vip.xiaonuo.inspection.modular.translate.mapper.InsuVoiceQueryResultMapper;
 import vip.xiaonuo.inspection.modular.translate.param.TranslateParam;
 import vip.xiaonuo.inspection.modular.translate.service.TranslateService;
-import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
+import vip.xiaonuo.inspection.modular.voiceRecord.mapper.InsuVoiceRecordMapper;
 import vip.xiaonuo.inspection.modular.voiceRecord.service.InsuVoiceRecordService;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * 语音转文字 Service 实现类
@@ -34,11 +34,11 @@ import java.util.concurrent.CompletableFuture;
  * @Date 2024/12/12
  */
 @Service
-public class TranslateServiceImpl extends ServiceImpl<InsuVoiceDialogMapper, InsuVoiceDialog> implements TranslateService {
-    private final InsuVoiceRecordService insuVoiceRecordService;
+public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, InsuVoiceRecord> implements TranslateService {
+    private static InsuVoiceRecordService insuVoiceRecordService;
     // 构造方法注入
     public TranslateServiceImpl(InsuVoiceRecordService insuVoiceRecordService) {
-        this.insuVoiceRecordService = insuVoiceRecordService;
+        TranslateServiceImpl.insuVoiceRecordService = insuVoiceRecordService;
     }
 
     @Value("${translate.appid}")
@@ -59,6 +59,12 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceDialogMapper, Ins
     private static final Logger logger = LoggerFactory.getLogger(TranslateServiceImpl.class);
     private final RestTemplate restTemplate = new RestTemplate();
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private InsuVoiceRecordMapper insuVoiceRecordMapper;
+    @Autowired
+    private InsuVoiceQueryResultMapper insuVoiceQueryResultMapper;
+    // 其他可能需要注入的依赖以及业务逻辑方法
+    
 
     /**
      * 通过 INSU_VOICE_ID 查询 VOICE_URL 并提交语音转文字任务
@@ -118,7 +124,7 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceDialogMapper, Ins
         logger.info("开始提交任务...");
 
         HttpHeaders headers = buildHeaders();
-        Map<String, Object> requestBody = buildSubmitRequestBody(translateParam);
+        Map<String,Object> requestBody = SubmitTaskRequestBody.build(translateParam, appId, token, cluster, uid).toMap();
 
         try {
             logRequest("提交任务", serviceUrl + "/submit", requestBody);
@@ -152,12 +158,18 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceDialogMapper, Ins
 
     /**
      * 查询任务结果
-     * @param taskId 任务 ID
+     * @param insuVoiceId 任务 ID
      * @return 任务结果
      */
     @Override
-    public Map<String, Object> queryTaskResult(String taskId) {
-        logger.info("开始查询任务...");
+    public Map<String, Object> queryTaskResult(Integer insuVoiceId) {
+
+        logger.info("开始根据 INSU_VOICE_ID 查询任务...");
+        // 首先根据 INSU_VOICE_ID 查询对应的 TASK_ID
+        String taskId = getTaskIdByInsuVoiceId(insuVoiceId);
+        if (taskId == null) {
+            logger.error("根据 INSU_VOICE_ID: {} 未找到对应的 TASK_ID", insuVoiceId);
+        }
 
         HttpHeaders headers = buildHeaders();
         Map<String, Object> queryParams = buildQueryParams(taskId);
@@ -165,11 +177,36 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceDialogMapper, Ins
         try {
             logRequest("查询任务", serviceUrl + "/query", queryParams);
             String response = postRequest(serviceUrl + "/query", headers, queryParams);
-            return parseQueryResponse(response);
+            Map<String, Object> resultMap = parseQueryResponse(response);
+            // 提取需要保存到新表的数据，这里从 resultMap 中获取 "queryResult" 字段，根据实际情况调整字段名
+            String queryResult = (String) resultMap.get("queryResult");
+            // 调用保存数据到 insu_voice_query_result 表的方法
+            logger.info("开始保存");
+            saveQueryResultToNewTable(insuVoiceId, taskId, queryResult);
+            return resultMap;
         } catch (Exception e) {
             logger.error("查询任务失败", e);
             throw new TranslateServiceException("查询任务失败", e);
         }
+    }
+
+    private String getTaskIdByInsuVoiceId(Integer insuVoiceId) {
+        QueryWrapper<InsuVoiceRecord> wrapper = new QueryWrapper<>();
+        wrapper.eq("INSU_VOICE_ID", insuVoiceId);
+        InsuVoiceRecord record = insuVoiceRecordMapper.selectOne(wrapper);
+        if (record!= null) {
+            return record.getTaskId();
+        }
+        return null;
+    }
+
+    private void saveQueryResultToNewTable(Integer insuVoiceId, String taskId, String queryResult) {
+        InsuVoiceQueryResult result = new InsuVoiceQueryResult();
+        result.setInsuVoiceId(insuVoiceId);
+        result.setTaskId(taskId);
+        result.setQueryResult(queryResult);
+        logger.info("保存结果: {}", result.getQueryResult());
+        insuVoiceQueryResultMapper.insert(result);
     }
 
     /**
@@ -320,7 +357,7 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceDialogMapper, Ins
         InsuVoiceRecord insuVoiceRecord = insuVoiceRecordService.getOne(queryWrapper);
 
         if (insuVoiceRecord == null) {
-            throw new CommonException("找不到对应的录音记录，INSU_VOICE_ID: " + insuVoiceId);
+            throw new TranslateServiceException("找不到对应的录音记录，INSU_VOICE_ID: " + insuVoiceId, null);
         }
 
 //        logger.info(insuVoiceRecord.toString());

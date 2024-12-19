@@ -58,7 +58,7 @@ const queryFormData = ref({
 
 const queryData = async (record) => {
 	try {
-		const response = await QueryTranslateApi.queryTaskResult({ taskId: record.taskId });
+		const response = await QueryTranslateApi.queryTaskResult({ insuVoiceId: record.insuVoiceId });
 		const resultJson = JSON.stringify(response);
 		queryFormData.value.queryResult = resultJson;
 		// 打印结果到控制台，方便调试查看

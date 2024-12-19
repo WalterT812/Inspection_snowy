@@ -3,7 +3,6 @@ package vip.xiaonuo.inspection.modular.translate.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import vip.xiaonuo.common.pojo.CommonResult;
-import vip.xiaonuo.inspection.modular.translate.entity.InsuVoiceDialog;
 import vip.xiaonuo.inspection.modular.translate.param.TranslateParam;
 import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 
@@ -17,7 +16,7 @@ import java.util.Map;
  * @date 2024/12/12
  * @description 语音翻译服务接口
  **/
-public interface TranslateService extends IService<InsuVoiceDialog> {
+public interface TranslateService extends IService<InsuVoiceRecord> {
 
     /**
      * 执行语音转文字操作提交任务，并返回任务ID
@@ -30,10 +29,10 @@ public interface TranslateService extends IService<InsuVoiceDialog> {
     /**
      * 根据任务ID查询语音转文字任务的结果
      *
-     * @param taskId 任务的ID
+     * @param insuVoiceId 任务的ID
      * @return 解析后的服务端响应结果，以Map形式返回（可根据实际进一步处理转换为具体业务对象等）
      */
-    Map<String, Object> queryTaskResult(String taskId);
+    Map<String,Object> queryTaskResult(Integer insuVoiceId);
 
     /**
      * 根据 INSU_VOICE_ID 提交语音转文字任务
