@@ -69,9 +69,10 @@ public class TranslateController {
     @PostMapping("/queryTaskResult")
     public CommonResult<Map<String, Object>> queryTaskResult(@RequestBody TranslateResultParam translateResultParam) {
         Integer insuVoiceId = translateResultParam.getInsuVoiceId();
-//        String taskId = translateResultParam.getTaskId();
+
         logger.info("查询任务结果, 录音Id: {}", insuVoiceId);
         try {
+
             Map<String, Object> queryResult = translateService.queryTaskResult(insuVoiceId);
             logger.info("任务查询成功, 结果: {}", queryResult);
             return CommonResult.data(queryResult);

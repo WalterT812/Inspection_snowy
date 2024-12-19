@@ -1,5 +1,6 @@
 package vip.xiaonuo.inspection.modular.translate.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -113,6 +114,7 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
         }});
     }
 
+
     /**
      * 提交语音转文字任务并返回任务 ID
      * @param translateParam 请求参数
@@ -163,6 +165,14 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
      */
     @Override
     public Map<String, Object> queryTaskResult(Integer insuVoiceId) {
+        // 先检查是否已保存过结果
+        if (isResultAlreadySaved(insuVoiceId)) {
+            logger.info("翻译结果已保存过，直接从数据库获取并返回");
+            InsuVoiceQueryResult savedResult = getSavedResult(insuVoiceId);
+            if (savedResult!= null) {
+                return JSONUtil.parseObj(savedResult.getQueryResult());
+            }
+        }
 
         logger.info("开始根据 INSU_VOICE_ID 查询任务...");
         // 首先根据 INSU_VOICE_ID 查询对应的 TASK_ID
@@ -178,17 +188,63 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
             logRequest("查询任务", serviceUrl + "/query", queryParams);
             String response = postRequest(serviceUrl + "/query", headers, queryParams);
             Map<String, Object> resultMap = parseQueryResponse(response);
-            // 提取需要保存到新表的数据，这里从 resultMap 中获取 "queryResult" 字段，根据实际情况调整字段名
-            String queryResult = (String) resultMap.get("queryResult");
+            String jsonResultMap  = JSONUtil.toJsonStr(resultMap);
             // 调用保存数据到 insu_voice_query_result 表的方法
             logger.info("开始保存");
-            saveQueryResultToNewTable(insuVoiceId, taskId, queryResult);
+            saveQueryResultToNewTable(insuVoiceId, taskId, jsonResultMap);
+
             return resultMap;
         } catch (Exception e) {
             logger.error("查询任务失败", e);
             throw new TranslateServiceException("查询任务失败", e);
         }
     }
+
+    /**
+     * 检查是否已经保存过翻译结果
+     * @param insuVoiceId 录音 ID
+     * @return true表示已保存过，false表示未保存过
+     */
+    private boolean isResultAlreadySaved(Integer insuVoiceId) {
+        QueryWrapper<InsuVoiceQueryResult> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("insu_voice_id", insuVoiceId);
+        InsuVoiceQueryResult result = insuVoiceQueryResultMapper.selectOne(queryWrapper);
+        return result!= null;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<HashMap<String, Object>> isSaveQueryResult(Integer insuVoiceId) {
+        boolean isSaved = isResultAlreadySaved(insuVoiceId);
+        if (isSaved) {
+            // 如果已保存，从数据库中获取保存的结果并返回给前端
+            InsuVoiceQueryResult savedResult = getSavedResult(insuVoiceId);
+            if (savedResult!= null) {
+                Map<String, Object> resultMap = JSONUtil.parseObj(savedResult.getQueryResult());
+                return CommonResult.data(new HashMap<String, Object>() {{
+                    put("data", resultMap);
+                    put("msg", "翻译结果已保存，直接返回");
+                    put("code", 200);
+                }});
+            }
+        }
+        return CommonResult.data(new HashMap<String, Object>() {{
+            put("data", null);
+            put("msg", "尚未保存翻译结果");
+            put("code", 204);
+        }});
+    }
+
+    /**
+     * 根据录音ID获取已保存的结果
+     * @param insuVoiceId 录音 ID
+     * @return 已保存的 InsuVoiceQueryResult对象，如果不存在则返回null
+     */
+    private InsuVoiceQueryResult getSavedResult(Integer insuVoiceId) {
+        QueryWrapper<InsuVoiceQueryResult> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("insu_voice_id", insuVoiceId);
+        return insuVoiceQueryResultMapper.selectOne(queryWrapper);
+    }
+
 
     private String getTaskIdByInsuVoiceId(Integer insuVoiceId) {
         QueryWrapper<InsuVoiceRecord> wrapper = new QueryWrapper<>();

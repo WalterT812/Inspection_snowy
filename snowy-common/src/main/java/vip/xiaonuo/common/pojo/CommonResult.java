@@ -60,6 +60,7 @@ public class CommonResult<T> implements Serializable{
     public String getMsg() {
         return this.msg;
     }
+
     /**
      * 获取data
      * @return data
