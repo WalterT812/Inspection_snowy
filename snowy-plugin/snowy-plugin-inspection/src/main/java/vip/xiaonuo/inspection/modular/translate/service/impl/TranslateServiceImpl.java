@@ -1,9 +1,12 @@
 package vip.xiaonuo.inspection.modular.translate.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,16 +20,15 @@ import org.springframework.web.client.RestTemplate;
 import vip.xiaonuo.common.pojo.CommonResult;
 import vip.xiaonuo.inspection.modular.translate.DTO.SubmitTaskRequestBody;
 import vip.xiaonuo.inspection.modular.translate.entity.InsuVoiceQueryResult;
-import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 import vip.xiaonuo.inspection.modular.translate.mapper.InsuVoiceQueryResultMapper;
 import vip.xiaonuo.inspection.modular.translate.param.TranslateParam;
 import vip.xiaonuo.inspection.modular.translate.service.TranslateService;
+import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 import vip.xiaonuo.inspection.modular.voiceRecord.mapper.InsuVoiceRecordMapper;
 import vip.xiaonuo.inspection.modular.voiceRecord.service.InsuVoiceRecordService;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 语音转文字 Service 实现类
@@ -36,8 +38,16 @@ import java.util.Map;
  */
 @Service
 public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, InsuVoiceRecord> implements TranslateService {
+
+    private static final Logger logger = LoggerFactory.getLogger(TranslateServiceImpl.class);
+    private final RestTemplate restTemplate = new RestTemplate();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    private InsuVoiceRecordMapper insuVoiceRecordMapper;
+    @Autowired
+    private InsuVoiceQueryResultMapper insuVoiceQueryResultMapper;
     private static InsuVoiceRecordService insuVoiceRecordService;
-    // 构造方法注入
     public TranslateServiceImpl(InsuVoiceRecordService insuVoiceRecordService) {
         TranslateServiceImpl.insuVoiceRecordService = insuVoiceRecordService;
     }
@@ -56,16 +66,6 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
 
     @Value("${translate.uid}")
     private String uid;
-
-    private static final Logger logger = LoggerFactory.getLogger(TranslateServiceImpl.class);
-    private final RestTemplate restTemplate = new RestTemplate();
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    @Autowired
-    private InsuVoiceRecordMapper insuVoiceRecordMapper;
-    @Autowired
-    private InsuVoiceQueryResultMapper insuVoiceQueryResultMapper;
-    // 其他可能需要注入的依赖以及业务逻辑方法
-    
 
     /**
      * 通过 INSU_VOICE_ID 查询 VOICE_URL 并提交语音转文字任务
@@ -188,15 +188,74 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
             logRequest("查询任务", serviceUrl + "/query", queryParams);
             String response = postRequest(serviceUrl + "/query", headers, queryParams);
             Map<String, Object> resultMap = parseQueryResponse(response);
-            String jsonResultMap  = JSONUtil.toJsonStr(resultMap);
+            Map<String, Object> processedResult = processQueryResult(resultMap);
+            String jsonResultMap  = JSONUtil.toJsonStr(processedResult);
             // 调用保存数据到 insu_voice_query_result 表的方法
             logger.info("开始保存");
             saveQueryResultToNewTable(insuVoiceId, taskId, jsonResultMap);
 
-            return resultMap;
+            return processedResult;
         } catch (Exception e) {
             logger.error("查询任务失败", e);
             throw new TranslateServiceException("查询任务失败", e);
+        }
+    }
+
+    /**
+     * 处理查询结果，提取utterances中的内容，并去掉words的内容，同时调整时间字段
+     * @param resultMap 原始查询结果的Map对象
+     * @return 处理后的Map对象，只包含utterances中的text字段，并且调整了时间字段
+     */
+    private Map<String, Object> processQueryResult(Map<String, Object> resultMap) {
+        Map<String, Object> processedResult = new HashMap<>();
+        List<Map<String, Object>> utterancesList = new ArrayList<>();
+        Integer firstStartTime = null; // 用于记录第一个utterance的start_time
+
+        // 提取utterances中的内容，移除words，并调整时间
+        if (resultMap.containsKey("utterances")) {
+            List<Map<String, Object>> utterances = (List<Map<String, Object>>) resultMap.get("utterances");
+            for (Map<String, Object> utterance : utterances) {
+                Map<String, Object> newUtterance = new HashMap<>(utterance);
+                // 移除words字段
+                newUtterance.remove("words");
+
+                // 将start_time和end_time除以1000并保留整数位
+                if (newUtterance.containsKey("start_time")) {
+                    int startTime = (Integer) newUtterance.get("start_time");
+                    newUtterance.put("start_time", startTime / 1000);
+                }
+                if (newUtterance.containsKey("end_time")) {
+                    int endTime = (Integer) newUtterance.get("end_time");
+                    newUtterance.put("end_time", endTime / 1000);
+                }
+
+                // 检查是否是第一个utterance，如果是，则记录其start_time
+                if (firstStartTime == null && newUtterance.containsKey("start_time")) {
+                    firstStartTime = (Integer) newUtterance.get("start_time");
+                }
+
+                // 如果firstStartTime不为空，则调整时间
+                if (firstStartTime != null) {
+                    adjustTimeFieldsBasedOnFirstStartTime(newUtterance, firstStartTime);
+                }
+
+                utterancesList.add(newUtterance);
+            }
+            processedResult.put("utterances", utterancesList);
+        }
+
+        return processedResult;
+    }
+
+    /**
+     * 根据第一个utterance的start_time调整其他utterance的时间字段
+     */
+    private void adjustTimeFieldsBasedOnFirstStartTime(Map<String, Object> utterance, Integer firstStartTime) {
+        if (utterance.containsKey("start_time")) {
+            utterance.put("start_time", (Integer) utterance.get("start_time") - firstStartTime.intValue() + 1);
+        }
+        if (utterance.containsKey("end_time")) {
+            utterance.put("end_time", (Integer) utterance.get("end_time") - firstStartTime.intValue() + 1);
         }
     }
 
@@ -245,7 +304,11 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
         return insuVoiceQueryResultMapper.selectOne(queryWrapper);
     }
 
-
+    /**
+     * 通过INSU_VOICE_ID获取TASK_ID
+     * @param insuVoiceId
+     * @return TaskId
+     */
     private String getTaskIdByInsuVoiceId(Integer insuVoiceId) {
         QueryWrapper<InsuVoiceRecord> wrapper = new QueryWrapper<>();
         wrapper.eq("INSU_VOICE_ID", insuVoiceId);
@@ -256,6 +319,12 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
         return null;
     }
 
+    /**
+     * 将数据存入表中
+     * @param insuVoiceId
+     * @param taskId
+     * @param queryResult
+     */
     private void saveQueryResultToNewTable(Integer insuVoiceId, String taskId, String queryResult) {
         InsuVoiceQueryResult result = new InsuVoiceQueryResult();
         result.setInsuVoiceId(insuVoiceId);
