@@ -7,6 +7,13 @@
         FROM insu_voice_record
     </select>
 
+    <!-- 更新 IS_QUERY 字段为 1 -->
+    <update id="updateIsQueryByInsuVoiceId" parameterType="java.lang.Integer">
+        UPDATE insu_voice_record
+        SET IS_QUERIED = 1
+        WHERE insu_voice_id = #{insuVoiceId}
+    </update>
+
     <resultMap id="InsuVoiceRecordResultMap" type="vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord">
         <id property="id" column="ID" />
         <result property="insuVoiceId" column="INSU_VOICE_ID" />
