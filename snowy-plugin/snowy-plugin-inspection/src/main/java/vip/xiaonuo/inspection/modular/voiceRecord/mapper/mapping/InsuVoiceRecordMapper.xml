@@ -7,7 +7,7 @@
         FROM insu_voice_record
     </select>
 
-    <resultMap id="InsuVoiceRecordResultMap" type="vip.xiaonuo.inspection.modular.translate.entity.InsuVoiceRecord">
+    <resultMap id="InsuVoiceRecordResultMap" type="vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord">
         <id property="id" column="ID" />
         <result property="insuVoiceId" column="INSU_VOICE_ID" />
         <!-- 依次配置其他属性与数据库列的映射关系 -->

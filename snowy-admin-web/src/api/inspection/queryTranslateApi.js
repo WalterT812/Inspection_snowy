@@ -10,6 +10,6 @@ const request = (url, ...arg) => baseRequest(`/inspection/translate/` + url, ...
  **/
 export default {
 	queryTaskResult(data){
-		return request("queryTaskResult", data)
+		return request("query", data)
 	}
 }

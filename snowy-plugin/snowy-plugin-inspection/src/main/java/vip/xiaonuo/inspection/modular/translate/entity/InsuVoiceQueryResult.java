@@ -3,10 +3,7 @@ package vip.xiaonuo.inspection.modular.translate.entity;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.Map;
+import lombok.Data;
 
 /**
  * @author tanghaoyu
@@ -14,8 +11,7 @@ import java.util.Map;
  * @description
  **/
 
-@Getter
-@Setter
+@Data
 @TableName("insu_voice_query_result")
 public class InsuVoiceQueryResult {
     /** 主键，自动递增 */

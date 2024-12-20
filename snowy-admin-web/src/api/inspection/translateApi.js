@@ -11,6 +11,6 @@ const request = (url, ...arg) => baseRequest(`/inspection/translate/` + url, ...
 export default {
 	// 翻译
 	translateVoice(data) {
-		return request('submitTask', data)
+		return request('submit', data)
 	},
 }
