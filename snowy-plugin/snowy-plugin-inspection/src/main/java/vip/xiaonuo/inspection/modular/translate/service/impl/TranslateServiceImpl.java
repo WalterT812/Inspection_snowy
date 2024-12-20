@@ -173,6 +173,13 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
                 // 批量保存
                 insuVoiceDialogService.saveBatch(dialogRecords);
             }
+
+            // 更新 insu_voice_record 的 IS_QUERY 字段为 1
+            boolean updateResult = translateDataService.updateIsQueryByInsuVoiceId(insuVoiceId);
+            if (!updateResult) {
+                LoggerUtil.handleException("更新 IS_QUERIED 字段失败，insuVoiceId: " + insuVoiceId, null);
+            }
+
             return processedResult;
         } catch (Exception e) {
             LoggerUtil.handleException("查询任务失败", e);

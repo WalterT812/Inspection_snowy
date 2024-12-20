@@ -142,4 +142,15 @@ public class TranslateDataServiceImpl implements TranslateDataService {
         // 返回完整的录音记录
         return insuVoiceRecord;
     }
+
+    /**
+     * 根据 insuVoiceId 更新 IS_QUERY 字段为 1
+     *
+     * @param insuVoiceId 录音 ID
+     * @return 是否更新成功
+     */
+    public boolean updateIsQueryByInsuVoiceId(Integer insuVoiceId) {
+        int rows = insuVoiceRecordMapper.updateIsQueryByInsuVoiceId(insuVoiceId);
+        return rows > 0;
+    }
 }

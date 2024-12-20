@@ -141,13 +141,13 @@ const columns = [
 		align: 'center',
 	},
 	{
-		title: '质检状态',
-		dataIndex: 'isInspected',
+		title: '查询状态',
+		dataIndex: 'isQueried',
 		align: 'center',
 	},
 	{
-		title: '查询状态',
-		dataIndex: 'isQueried',
+		title: '质检状态',
+		dataIndex: 'isInspected',
 		align: 'center',
 	},
 	{

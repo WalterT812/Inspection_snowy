@@ -13,6 +13,7 @@
 package vip.xiaonuo.inspection.modular.voiceRecord.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Update;
 import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 
 /**
@@ -24,4 +25,13 @@ import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 public interface InsuVoiceRecordMapper extends BaseMapper<InsuVoiceRecord> {
     // 查询最大 INSU_VOICE_ID
     Integer selectMaxInsuVoiceId();
+
+    /**
+     * 根据 insuVoiceId 更新 IS_QUERY 字段为 1
+     *
+     * @param insuVoiceId 录音 ID
+     * @return 更新的行数
+     */
+    @Update("UPDATE insu_voice_record SET IS_QUERIED = 1 WHERE insu_voice_id = #{insuVoiceId}")
+    int updateIsQueryByInsuVoiceId(Integer insuVoiceId);
 }
