@@ -12,4 +12,6 @@ import java.util.List;
 @Data
 public class QueryTaskResponse {
     private List<Utterance> utterances;
+    private int code;
+    private String msg;
 }

@@ -1,5 +1,6 @@
 package vip.xiaonuo.inspection.modular.translate.service.impl;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,8 +65,8 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
             SubmitTaskResponse response = new SubmitTaskResponse();
             SubmitTaskResponse.Resp resp = new SubmitTaskResponse.Resp();
             resp.setId(taskId);
-            resp.setCode(1000); // 假设 1000 表示成功
-            resp.setMessage("该语音文件已翻译");
+            resp.setCode(204); // 204 已翻译
+            resp.setMsg("该语音文件已翻译");
             response.setResp(resp);
             return response;
         }
@@ -97,8 +98,8 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
         SubmitTaskResponse response = new SubmitTaskResponse();
         SubmitTaskResponse.Resp resp = new SubmitTaskResponse.Resp();
         resp.setId(taskId);
-        resp.setCode(1000); // 假设 1000 表示成功
-        resp.setMessage("翻译并保存成功");
+        resp.setCode(200); // 200 成功
+        resp.setMsg("翻译并保存成功");
         response.setResp(resp);
         return response;
     }
@@ -117,7 +118,17 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
                 LoggerUtil.logRequest("查询任务结果", "从数据库获取结果", insuVoiceId);
                 InsuVoiceQueryResult savedResult = translateDataService.getSavedResult(insuVoiceId);
                 if (savedResult != null) {
-                    return JSONUtil.toBean(savedResult.getQueryResult(), QueryTaskResponse.class);
+//                    QueryTaskResponse response = JSONUtil.toBean(savedResult.getQueryResult(), QueryTaskResponse.class);
+                    // 解析 JSON 字符串为 Map
+                    Map<String, Object> resultMap = JSONUtil.parseObj(savedResult.getQueryResult());
+                    // 创建 QueryTaskResponse 对象
+                    QueryTaskResponse response = new QueryTaskResponse();
+                    JSONArray utteranceArray = JSONUtil.parseArray(resultMap.get("utterances"));
+                    List<Utterance> utterances = JSONUtil.toList(utteranceArray, Utterance.class);
+                    response.setUtterances(utterances);
+                    response.setCode(204);
+                    response.setMsg("已查询");
+                    return response;
                 }
             }
 
@@ -138,6 +149,12 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
                 LoggerUtil.handleException("查询响应为空", null);
             }
 
+            if (response != null && response.getResp().getCode() == 2000){
+                QueryTaskResponse queryTaskResponse = new QueryTaskResponse();
+                queryTaskResponse.setMsg("翻译暂未完成");
+                queryTaskResponse.setCode(205);
+                return queryTaskResponse;
+            }
             // 处理查询结果
             QueryTaskResponse processedResult = queryResultProcessor.processQueryResult(response);
 
@@ -179,6 +196,9 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
             if (!updateResult) {
                 LoggerUtil.handleException("更新 IS_QUERIED 字段失败，insuVoiceId: " + insuVoiceId, null);
             }
+
+            processedResult.setMsg("首次保存成功");
+            processedResult.setCode(200);
 
             return processedResult;
         } catch (Exception e) {

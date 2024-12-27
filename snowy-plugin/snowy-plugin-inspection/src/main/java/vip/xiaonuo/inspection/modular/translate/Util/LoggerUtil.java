@@ -16,7 +16,7 @@ public class LoggerUtil {
      *
      * @param action       操作名称
      * @param infoType     信息类型（如 URL、数据等）
-     * @param infoContent 信息内容
+     * @param infoContent  信息内容
      */
     public static void logRequest(String action, String infoType, Object infoContent) {
         logger.info("[{}] {}: {}", action, infoType, infoContent);

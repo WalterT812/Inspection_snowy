@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vip.xiaonuo.common.annotation.CommonLog;
 import vip.xiaonuo.common.pojo.CommonResult;
+import vip.xiaonuo.inspection.modular.translate.Util.LoggerUtil;
 import vip.xiaonuo.inspection.modular.translate.dto.QueryTaskResponse;
 import vip.xiaonuo.inspection.modular.translate.dto.SubmitTaskResponse;
 import vip.xiaonuo.inspection.modular.translate.param.TranslateResultParam;
@@ -66,13 +67,14 @@ public class TranslateController {
     @Operation(summary = "提交语音翻译任务")
     @CommonLog("提交语音翻译任务")
     @PostMapping("/submit")
-    public CommonResult<SubmitTaskResponse> translateVoice(@RequestBody TranslateVoiceParam translateParam) {
+    public CommonResult<SubmitTaskResponse.Resp> translateVoice(@RequestBody TranslateVoiceParam translateParam) {
         Integer insuVoiceId = translateParam.getInsuVoiceId();
         logger.info("提交语音翻译任务，录音ID: {}", insuVoiceId);
         try {
             // 调用 submitTaskByInsuVoiceId 获取 SubmitTaskResponse 对象
             SubmitTaskResponse result = translateService.submitTaskByInsuVoiceId(insuVoiceId);
-            return CommonResult.data(result);
+            LoggerUtil.logRequest(null,result.getResp().toString(),null);
+            return CommonResult.data(result.getResp());
         } catch (Exception e) {
             logger.error("任务提交失败", e);
             return CommonResult.error("任务提交失败: " + e.getMessage());

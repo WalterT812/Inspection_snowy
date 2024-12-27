@@ -73,7 +73,7 @@ public class TaskServiceImpl implements TaskService {
                 simplifiedResponse.setResp(new SubmitTaskResponse.Resp());
                 simplifiedResponse.getResp().setId(submitTaskResponse.getResp().getId());
                 simplifiedResponse.getResp().setCode(submitTaskResponse.getResp().getCode());
-                simplifiedResponse.getResp().setMessage(submitTaskResponse.getResp().getMessage());
+                simplifiedResponse.getResp().setMsg(submitTaskResponse.getResp().getMsg());
                 return simplifiedResponse;
             } else {
                 logger.error("提交任务失败，响应码: {}", submitTaskResponse.getResp() != null ? submitTaskResponse.getResp().getCode() : "null");
@@ -98,20 +98,10 @@ public class TaskServiceImpl implements TaskService {
         HttpHeaders headers = HttpUtil.buildHeaders(token);
 
         try {
-            String response = HttpUtil.postRequest(url, headers, queryParams);
-            // 检查返回码并处理错误
-            if (response!= null) {
-                QueryResponse queryResponse = objectMapper.readValue(response, QueryResponse.class);
-                if (queryResponse!= null && queryResponse.getResp()!= null && queryResponse.getResp().getCode() == 2000) {
-                    LoggerUtil.handleException("查询失败，处理未完成", null);
-                    // 可以选择抛出自定义异常或返回错误信息
-                    throw new LoggerUtil.TranslateServiceException("查询失败，处理未完成");
-                }
-            }
-            return response;
+            return HttpUtil.postRequest(url, headers, queryParams);
         } catch (Exception e) {
-            LoggerUtil.handleException("查询任务失败", e);
-            return "查询任务失败";
+            logger.error("查询任务失败", e);
+            throw new LoggerUtil.TranslateServiceException("查询任务失败", e);
         }
     }
 
