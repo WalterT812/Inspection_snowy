@@ -32,11 +32,11 @@ import insuVoiceRecordApi from '@/api/inspection/insuVoiceRecordApi';
 import QueryTranslateApi from "@/api/inspection/queryTranslateApi";
 import {ref} from "vue";
 import {message} from "ant-design-vue";
+import { defineEmits } from 'vue';
 
 
 // 抽屉状态
 const open = ref(false)
-const emit = defineEmits({ successful: null })
 const queryFormRef = ref()
 
 // 表单数据
@@ -56,7 +56,9 @@ const queryFormData = ref({
 	queryResult: null,
 })
 
-const queryData = async (record) => {
+const emit = defineEmits(['refreshTable']);
+
+const onQuery = async (record) => {
 	await QueryTranslateApi
 		.queryTaskResult({insuVoiceId: record.insuVoiceId})
 		.then((response) => {
@@ -75,7 +77,8 @@ const queryData = async (record) => {
 			}
 			const resultJson = JSON.stringify(utterances);
 			queryFormData.value.queryResult = resultJson;
-			tableRef.value.refresh(true); // 刷新表格
+			debugger
+			emit('refreshTable');
 		})
 		.catch((error) => {
 			console.error('查询任务结果失败', error);
@@ -90,7 +93,7 @@ const onOpen = (record) => {
 	if (record) {
 		let recordData = cloneDeep(record)
 		formData.value = Object.assign({}, recordData)
-		queryData(record);
+		onQuery(record);
 	}
 }
 

@@ -49,7 +49,7 @@
 						<Form ref="formRef" />
 						<a-button @click="formRef.onOpen(record)" style="color: #1890ff">编辑</a-button>
 						<a-divider type="vertical"/>
-						<query-form ref="queryFormRef" />
+						<query-form ref="queryFormRef" @refreshTable="refreshTable" />
 						<a-button @click="queryFormRef.onOpen(record)" style="color: #1890ff;">查询</a-button>
 						<a-divider type="vertical"/>
 						<a-popconfirm title="确定要删除吗？" @confirm="deleteInsuVoiceRecord(record)">
@@ -59,6 +59,7 @@
 				</template>
 			</template>
 		</s-table>
+
 	</a-card>
 </template>
 
@@ -79,6 +80,11 @@ const formRef = ref()
 const queryFormRef = ref()
 const formR = ref()
 const toolConfig = { refresh: true, height: true, columnSetting: true, striped: false }
+const refreshTable = () => {
+	debugger
+	tableRef.value.refresh(true);
+};
+
 const columns = [
 	{
 		title: '录音ID',
@@ -224,7 +230,7 @@ const handleTranslate = (record) => {
 				// 其他非预期的状态码
 				message.error('翻译请求出现未知状态码，请稍后重试');
 			}
-			tableRef.value.refresh(true); // 刷新表格
+			refreshTable();
 		})
 		.catch((error) => {
 			message.error(error.msg || '翻译失败，请稍后重试');
