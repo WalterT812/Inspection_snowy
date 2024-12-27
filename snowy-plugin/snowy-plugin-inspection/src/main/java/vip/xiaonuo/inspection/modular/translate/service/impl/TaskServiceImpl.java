@@ -98,10 +98,20 @@ public class TaskServiceImpl implements TaskService {
         HttpHeaders headers = HttpUtil.buildHeaders(token);
 
         try {
-            return HttpUtil.postRequest(url, headers, queryParams);
+            String response = HttpUtil.postRequest(url, headers, queryParams);
+            // 检查返回码并处理错误
+            if (response!= null) {
+                QueryResponse queryResponse = objectMapper.readValue(response, QueryResponse.class);
+                if (queryResponse!= null && queryResponse.getResp()!= null && queryResponse.getResp().getCode() == 2000) {
+                    LoggerUtil.handleException("查询失败，处理未完成", null);
+                    // 可以选择抛出自定义异常或返回错误信息
+                    throw new LoggerUtil.TranslateServiceException("查询失败，处理未完成");
+                }
+            }
+            return response;
         } catch (Exception e) {
-            logger.error("查询任务失败", e);
-            throw new LoggerUtil.TranslateServiceException("查询任务失败", e);
+            LoggerUtil.handleException("查询任务失败", e);
+            return "查询任务失败";
         }
     }
 
