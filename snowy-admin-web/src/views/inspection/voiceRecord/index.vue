@@ -212,10 +212,11 @@ const handleTranslate = (record) => {
 		.translateVoice({ insuVoiceId: record.insuVoiceId })
 		.then((response) => {
 			console.log(response);
-			const { code, msg, data } = response;  // 获取返回的数据和消息
+			const { code, id, msg } = response;  // 获取返回的数据和消息
+			debugger
 			if (code === 204) {
 				// 状态码为204
-				message.success(msg);  // 这里msg就是后端返回的自定义消息，比如"该语音文件已翻译"
+				message.info(msg);
 			} else if (code === 200) {
 				// 状态码为200
 				message.success(msg);

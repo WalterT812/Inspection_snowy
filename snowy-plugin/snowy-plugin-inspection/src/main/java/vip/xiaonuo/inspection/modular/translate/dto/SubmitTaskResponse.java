@@ -17,6 +17,6 @@ public class SubmitTaskResponse {
     public static class Resp {
         private int code;
         private String id;
-        private String message;
+        private String msg;
     }
 }

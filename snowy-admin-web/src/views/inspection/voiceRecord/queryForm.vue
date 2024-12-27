@@ -57,16 +57,30 @@ const queryFormData = ref({
 })
 
 const queryData = async (record) => {
-	try {
-		const response = await QueryTranslateApi.queryTaskResult({ insuVoiceId: record.insuVoiceId });
-		const resultJson = JSON.stringify(response);
-		queryFormData.value.queryResult = resultJson;
-		// 打印结果到控制台，方便调试查看
-		console.log(resultJson);
-	} catch (error) {
-		console.error('查询任务结果失败', error);
-		message.error('查询任务结果失败，请稍后重试');
-	}
+	await QueryTranslateApi
+		.queryTaskResult({insuVoiceId: record.insuVoiceId})
+		.then((response) => {
+			const {code, msg, utterances} = response;
+			debugger
+			if (code === 200) {
+				// 状态码为200，表示成功
+				message.success(msg);
+			} else if (code === 204) {
+				message.info(msg);
+			}else if(code === 205){
+				message.warn(msg);
+			} else {
+				// 其他非预期的状态码
+				message.error('查询任务结果出现未知状态码，请稍后重试');
+			}
+			const resultJson = JSON.stringify(utterances);
+			queryFormData.value.queryResult = resultJson;
+			tableRef.value.refresh(true); // 刷新表格
+		})
+		.catch((error) => {
+			console.error('查询任务结果失败', error);
+			message.error('查询任务结果失败，请稍后重试');
+		});
 }
 
 // 打开抽屉
