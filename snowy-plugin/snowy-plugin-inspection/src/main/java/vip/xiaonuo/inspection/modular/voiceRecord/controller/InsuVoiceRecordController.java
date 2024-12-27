@@ -15,13 +15,10 @@ package vip.xiaonuo.inspection.modular.voiceRecord.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import vip.xiaonuo.common.annotation.CommonLog;
 import vip.xiaonuo.common.pojo.CommonResult;
-import vip.xiaonuo.inspection.modular.translate.param.TranslateVoiceParam;
 import vip.xiaonuo.inspection.modular.translate.service.TranslateService;
 import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 import vip.xiaonuo.inspection.modular.voiceRecord.param.*;
@@ -31,7 +28,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 
-import java.util.HashMap;
+
 import java.util.List;
 
 /**
@@ -51,8 +48,6 @@ public class InsuVoiceRecordController {
     @Resource
     private TranslateService translateService;
 
-    private static final Logger logger = LoggerFactory.getLogger(InsuVoiceRecordController.class);
-
     /**
      * 获取存储录音分页
      *
@@ -60,7 +55,6 @@ public class InsuVoiceRecordController {
      * @date  2024/12/13 12:08
      */
     @Operation(summary = "获取存储录音分页")
-//    @SaCheckPermission("/inspection/voiceRecord/page")
     @GetMapping("/page")
     public CommonResult<Page<InsuVoiceRecord>> page(InsuVoiceRecordPageParam insuVoiceRecordPageParam) {
         return CommonResult.data(insuVoiceRecordService.page(insuVoiceRecordPageParam));
@@ -74,7 +68,6 @@ public class InsuVoiceRecordController {
      */
     @Operation(summary = "添加存储录音")
     @CommonLog("添加存储录音")
-//    @SaCheckPermission("/inspection/voiceRecord/add")
     @PostMapping("/add")
     public CommonResult<String> add(@RequestBody @Valid InsuVoiceRecordAddParam insuVoiceRecordAddParam) {
         insuVoiceRecordService.add(insuVoiceRecordAddParam);
@@ -89,7 +82,6 @@ public class InsuVoiceRecordController {
      */
     @Operation(summary = "编辑存储录音")
     @CommonLog("编辑存储录音")
-//    @SaCheckPermission("/inspection/voiceRecord/edit")
     @PostMapping("/edit")
     public CommonResult<String> edit(@RequestBody @Valid InsuVoiceRecordEditParam insuVoiceRecordEditParam) {
         insuVoiceRecordService.edit(insuVoiceRecordEditParam);
@@ -104,7 +96,6 @@ public class InsuVoiceRecordController {
      */
     @Operation(summary = "删除存储录音")
     @CommonLog("删除存储录音")
-//    @SaCheckPermission("/inspection/voiceRecord/delete")
     @PostMapping("/delete")
     public CommonResult<String> delete(@RequestBody @Valid @NotEmpty(message = "集合不能为空")
                                            List<InsuVoiceRecordIdParam> insuVoiceRecordIdParamList) {

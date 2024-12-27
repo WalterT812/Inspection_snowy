@@ -14,6 +14,9 @@ package vip.xiaonuo.inspection.modular.voiceRecord.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * 存储录音Mapper接口
@@ -32,4 +35,9 @@ public interface InsuVoiceRecordMapper extends BaseMapper<InsuVoiceRecord> {
      * @return 更新的行数
      */
     Integer updateIsQueryByInsuVoiceId(Integer insuVoiceId);
+
+    /**
+     * 根据ID列表删除录音记录
+     */
+    void deleteByIds(@Param("voiceIds") List<Integer> voiceIds);
 }
