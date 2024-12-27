@@ -15,7 +15,9 @@
 			</a-form>
 			<!-- 按钮与输入框在同一行内，靠左对齐 -->
 			<a-button type="primary" @click="onSubmit" :loading="submitLoading" style="margin-left: 8px;">
-				<template #icon><plus-outlined /></template>
+				<template #icon>
+					<plus-outlined/>
+				</template>
 				插入
 			</a-button>
 		</div>
@@ -46,10 +48,10 @@
 					<a-space>
 						<a-button @click="handleTranslate(record)" style="color: #1890ff;">翻译</a-button>
 						<a-divider type="vertical"/>
-						<Form ref="formRef" />
+						<Form ref="formRef"/>
 						<a-button @click="formRef.onOpen(record)" style="color: #1890ff">编辑</a-button>
 						<a-divider type="vertical"/>
-						<query-form ref="queryFormRef" @refreshTable="refreshTable" />
+						<query-form ref="queryFormRef" @refreshTable="refreshTable"/>
 						<a-button @click="queryFormRef.onOpen(record)" style="color: #1890ff;">查询</a-button>
 						<a-divider type="vertical"/>
 						<a-popconfirm title="确定要删除吗？" @confirm="deleteInsuVoiceRecord(record)">
@@ -64,22 +66,22 @@
 </template>
 
 <script setup name="voiceRecord">
-import { ref , h } from 'vue'
-import { cloneDeep } from 'lodash-es'
+import {ref, h} from 'vue'
+import {cloneDeep} from 'lodash-es'
 
 import Form from './form.vue'
 import queryForm from './queryForm.vue';
 
 import insuVoiceRecordApi from '@/api/inspection/insuVoiceRecordApi'
 import translateApi from "@/api/inspection/translateApi"
-import { message } from 'ant-design-vue'
+import {message} from 'ant-design-vue'
 import Clipboard from "clipboard";
 
 const tableRef = ref()
 const formRef = ref()
 const queryFormRef = ref()
 const formR = ref()
-const toolConfig = { refresh: true, height: true, columnSetting: true, striped: false }
+const toolConfig = {refresh: true, height: true, columnSetting: true, striped: false}
 const refreshTable = () => {
 	debugger
 	tableRef.value.refresh(true);
@@ -95,51 +97,51 @@ const columns = [
 		title: '录音URL',
 		dataIndex: 'voiceUrl',
 		align: 'center',
-    customRender: ({ record }) => {
-      const url = record.voiceUrl;
-      if (url && url.length > 20) {
-        const start = url.slice(0, 10);
-        const end = url.slice(-10);
-        const shortUrl = `${start}...${end}`;
-        return h('span', {
-          onMouseenter: (e) => {
-            const tooltipDiv = document.createElement('div');
-            tooltipDiv.textContent = url;
-            tooltipDiv.style.fontSize = '12px';
-            tooltipDiv.style.position = 'absolute';
-            tooltipDiv.style.backgroundColor = 'white';
-            tooltipDiv.style.border = '1px black solid';
-            tooltipDiv.style.padding = '3px';
-            tooltipDiv.style.zIndex = 1000;
-            document.body.appendChild(tooltipDiv);
-            const rect = e.target.getBoundingClientRect();
-            tooltipDiv.style.top = rect.bottom + 'px';
-            tooltipDiv.style.left = rect.left + 'px';
-          },
-          onMouseleave: () => {
-            const tooltips = document.querySelectorAll('div[style*="position: absolute;"]');
-            tooltips.forEach((tooltip) => tooltip.remove());
-          },
-          onClick: () => {
-            const clipboard = new Clipboard('.url-display-wrapper', {
-              text: () => url
-            });
-            clipboard.on('success', () => {
-              console.log('已复制到剪贴板');
-              message.success("复制成功");
-              clipboard.destroy();
-            });
-            clipboard.on('error', (err) => {
-              console.error('复制到剪贴板失败', err);
-              message.error("复制失败");
-              clipboard.destroy();
-            });
-          },
-          class: 'url-display-wrapper'
-        }, shortUrl);
-      }
-      return url;
-    }
+		customRender: ({record}) => {
+			const url = record.voiceUrl;
+			if (url && url.length > 20) {
+				const start = url.slice(0, 10);
+				const end = url.slice(-10);
+				const shortUrl = `${start}...${end}`;
+				return h('span', {
+					onMouseenter: (e) => {
+						const tooltipDiv = document.createElement('div');
+						tooltipDiv.textContent = url;
+						tooltipDiv.style.fontSize = '12px';
+						tooltipDiv.style.position = 'absolute';
+						tooltipDiv.style.backgroundColor = 'white';
+						tooltipDiv.style.border = '1px black solid';
+						tooltipDiv.style.padding = '3px';
+						tooltipDiv.style.zIndex = 1000;
+						document.body.appendChild(tooltipDiv);
+						const rect = e.target.getBoundingClientRect();
+						tooltipDiv.style.top = rect.bottom + 'px';
+						tooltipDiv.style.left = rect.left + 'px';
+					},
+					onMouseleave: () => {
+						const tooltips = document.querySelectorAll('div[style*="position: absolute;"]');
+						tooltips.forEach((tooltip) => tooltip.remove());
+					},
+					onClick: () => {
+						const clipboard = new Clipboard('.url-display-wrapper', {
+							text: () => url
+						});
+						clipboard.on('success', () => {
+							console.log('已复制到剪贴板');
+							message.success("复制成功");
+							clipboard.destroy();
+						});
+						clipboard.on('error', (err) => {
+							console.error('复制到剪贴板失败', err);
+							message.error("复制失败");
+							clipboard.destroy();
+						});
+					},
+					class: 'url-display-wrapper'
+				}, shortUrl);
+			}
+			return url;
+		}
 	},
 	{
 		title: '翻译状态',
@@ -215,10 +217,10 @@ const handleTranslate = (record) => {
 	record.isTranslated = 1
 	// 调用翻译 API
 	translateApi
-		.translateVoice({ insuVoiceId: record.insuVoiceId })
+		.translateVoice({insuVoiceId: record.insuVoiceId})
 		.then((response) => {
 			console.log(response);
-			const { code, id, msg } = response;  // 获取返回的数据和消息
+			const {code, id, msg} = response;  // 获取返回的数据和消息
 			debugger
 			if (code === 204) {
 				// 状态码为204
@@ -261,7 +263,7 @@ const submitLoading = ref(false)
 
 // 默认要校验的
 const formRules = {
-	voiceUrl: [{ required: true, message: '请输入录音文件的 URL' }],
+	voiceUrl: [{required: true, message: '请输入录音文件的 URL'}],
 }
 
 // 插入链接
@@ -283,7 +285,7 @@ const onSubmit = () => {
 				.finally(() => {
 					submitLoading.value = false
 				})
-			})
+		})
 		.catch(() => {
 		})
 }
@@ -309,11 +311,11 @@ const deleteBatchInsuVoiceRecord = (params) => {
 </script>
 
 <style>
-.url-display-wrapper{
-  max-width: 200px; /* 设置最大宽度，避免过长的简短 URL 撑开表格单元格 */
-  overflow: hidden; /* 超出部分隐藏 */
-  text-overflow: ellipsis; /* 显示省略号表示有内容被隐藏 */
-  white-space: nowrap; /* 禁止文本换行 */
-  cursor: pointer; /* 鼠标指针变为手型，提示用户可以交互 */
+.url-display-wrapper {
+	max-width: 200px; /* 设置最大宽度，避免过长的简短 URL 撑开表格单元格 */
+	overflow: hidden; /* 超出部分隐藏 */
+	text-overflow: ellipsis; /* 显示省略号表示有内容被隐藏 */
+	white-space: nowrap; /* 禁止文本换行 */
+	cursor: pointer; /* 鼠标指针变为手型，提示用户可以交互 */
 }
 </style>

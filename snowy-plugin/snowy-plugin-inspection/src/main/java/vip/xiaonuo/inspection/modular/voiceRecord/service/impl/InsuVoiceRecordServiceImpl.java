@@ -7,12 +7,12 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vip.xiaonuo.common.enums.CommonSortOrderEnum;
 import vip.xiaonuo.common.exception.CommonException;
 import vip.xiaonuo.common.page.CommonPageRequest;
-import vip.xiaonuo.inspection.modular.voiceRecord.controller.InsuVoiceRecordController;
 import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 import vip.xiaonuo.inspection.modular.voiceRecord.mapper.InsuVoiceRecordMapper;
 import vip.xiaonuo.inspection.modular.voiceRecord.param.InsuVoiceRecordAddParam;
@@ -20,12 +20,12 @@ import vip.xiaonuo.inspection.modular.voiceRecord.param.InsuVoiceRecordEditParam
 import vip.xiaonuo.inspection.modular.voiceRecord.param.InsuVoiceRecordIdParam;
 import vip.xiaonuo.inspection.modular.voiceRecord.param.InsuVoiceRecordPageParam;
 import vip.xiaonuo.inspection.modular.voiceRecord.service.InsuVoiceRecordService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import vip.xiaonuo.inspection.modular.translate.mapper.InsuVoiceDialogMapper;
+import vip.xiaonuo.inspection.modular.translate.mapper.InsuVoiceQueryResultMapper;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 存储录音Service接口实现类
@@ -36,7 +36,11 @@ import java.util.List;
 @Service
 public class InsuVoiceRecordServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, InsuVoiceRecord> implements InsuVoiceRecordService {
 
-    private static final Logger logger = LoggerFactory.getLogger(InsuVoiceRecordServiceImpl.class);
+    @Autowired
+    private InsuVoiceDialogMapper insuVoiceDialogMapper;
+
+    @Autowired
+    private InsuVoiceQueryResultMapper insuVoiceQueryResultMapper;
 
     @Override
     public Page<InsuVoiceRecord> page(InsuVoiceRecordPageParam insuVoiceRecordPageParam) {
@@ -100,8 +104,23 @@ public class InsuVoiceRecordServiceImpl extends ServiceImpl<InsuVoiceRecordMappe
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void delete(List<InsuVoiceRecordIdParam> insuVoiceRecordIdParamList) {
-        // 执行删除
-        this.removeByIds(CollStreamUtil.toList(insuVoiceRecordIdParamList, InsuVoiceRecordIdParam::getId));
+        // 1. 获取要删除记录的ID列表
+        List<Integer> ids = CollStreamUtil.toList(insuVoiceRecordIdParamList, InsuVoiceRecordIdParam::getId);
+        
+        // 2. 查询这些记录的 INSU_VOICE_ID
+        List<InsuVoiceRecord> records = this.listByIds(ids);
+        List<Integer> insuVoiceIds = records.stream()
+                .map(InsuVoiceRecord::getInsuVoiceId)
+                .collect(Collectors.toList());
+        
+        // 3. 删除对话记录（通过 INSU_VOICE_ID）
+        insuVoiceDialogMapper.deleteByInsuVoiceIds(insuVoiceIds);
+        
+        // 4. 删除查询结果（通过 INSU_VOICE_ID）
+        insuVoiceQueryResultMapper.deleteByInsuVoiceIds(insuVoiceIds);
+        
+        // 5. 删除录音记录（通过 ID）
+        this.baseMapper.deleteByIds(ids);
     }
 
     @Override

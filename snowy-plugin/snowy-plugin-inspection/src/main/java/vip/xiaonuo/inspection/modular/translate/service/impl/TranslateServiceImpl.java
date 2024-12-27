@@ -21,6 +21,7 @@ import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 import vip.xiaonuo.inspection.modular.voiceRecord.mapper.InsuVoiceRecordMapper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -118,7 +119,6 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
                 LoggerUtil.logRequest("查询任务结果", "从数据库获取结果", insuVoiceId);
                 InsuVoiceQueryResult savedResult = translateDataService.getSavedResult(insuVoiceId);
                 if (savedResult != null) {
-//                    QueryTaskResponse response = JSONUtil.toBean(savedResult.getQueryResult(), QueryTaskResponse.class);
                     // 解析 JSON 字符串为 Map
                     Map<String, Object> resultMap = JSONUtil.parseObj(savedResult.getQueryResult());
                     // 创建 QueryTaskResponse 对象
@@ -159,7 +159,9 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
             QueryTaskResponse processedResult = queryResultProcessor.processQueryResult(response);
 
             // 保存查询结果到数据库
-            String jsonResultMap = JSONUtil.toJsonStr(processedResult);
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("utterances", processedResult.getUtterances());
+            String jsonResultMap = JSONUtil.toJsonStr(resultMap);
             translateDataService.saveQueryResult(insuVoiceId, taskId, jsonResultMap);
 
             // 将 utterances 保存到数据库

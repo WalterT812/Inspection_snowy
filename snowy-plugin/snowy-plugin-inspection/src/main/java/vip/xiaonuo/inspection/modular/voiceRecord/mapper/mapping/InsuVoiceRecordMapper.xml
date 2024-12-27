@@ -19,4 +19,12 @@
         <result property="insuVoiceId" column="INSU_VOICE_ID" />
         <!-- 依次配置其他属性与数据库列的映射关系 -->
     </resultMap>
+
+    <delete id="deleteByIds">
+        DELETE FROM insu_voice_record 
+        WHERE ID IN
+        <foreach collection="voiceIds" item="voiceId" open="(" separator="," close=")">
+            #{voiceId}
+        </foreach>
+    </delete>
 </mapper>
