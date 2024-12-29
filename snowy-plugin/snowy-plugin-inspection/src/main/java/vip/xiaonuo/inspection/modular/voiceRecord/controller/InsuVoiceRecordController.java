@@ -35,7 +35,7 @@ import java.util.List;
  * 存储录音控制器
  *
  * @author tanghaoyu
- * @date  2024/12/13 12:08
+ * @date 2024/12/13 12:08
  */
 @Tag(name = "存储录音控制器")
 @RestController
@@ -52,7 +52,7 @@ public class InsuVoiceRecordController {
      * 获取存储录音分页
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      */
     @Operation(summary = "获取存储录音分页")
     @GetMapping("/page")
@@ -64,7 +64,7 @@ public class InsuVoiceRecordController {
      * 添加存储录音
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      */
     @Operation(summary = "添加存储录音")
     @CommonLog("添加存储录音")
@@ -78,7 +78,7 @@ public class InsuVoiceRecordController {
      * 编辑存储录音
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      */
     @Operation(summary = "编辑存储录音")
     @CommonLog("编辑存储录音")
@@ -92,13 +92,13 @@ public class InsuVoiceRecordController {
      * 删除存储录音
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      */
     @Operation(summary = "删除存储录音")
     @CommonLog("删除存储录音")
     @PostMapping("/delete")
     public CommonResult<String> delete(@RequestBody @Valid @NotEmpty(message = "集合不能为空")
-                                           List<InsuVoiceRecordIdParam> insuVoiceRecordIdParamList) {
+                                       List<InsuVoiceRecordIdParam> insuVoiceRecordIdParamList) {
         insuVoiceRecordService.delete(insuVoiceRecordIdParamList);
         return CommonResult.ok();
     }
@@ -107,7 +107,7 @@ public class InsuVoiceRecordController {
      * 获取存储录音详情
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      */
     @Operation(summary = "获取存储录音详情")
 //    @SaCheckPermission("/inspection/voiceRecord/detail")

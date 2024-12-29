@@ -149,7 +149,7 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
                 LoggerUtil.handleException("查询响应为空", null);
             }
 
-            if (response != null && response.getResp().getCode() == 2000){
+            if (response != null && response.getResp().getCode() == 2000) {
                 QueryTaskResponse queryTaskResponse = new QueryTaskResponse();
                 queryTaskResponse.setMsg("翻译暂未完成");
                 queryTaskResponse.setCode(205);

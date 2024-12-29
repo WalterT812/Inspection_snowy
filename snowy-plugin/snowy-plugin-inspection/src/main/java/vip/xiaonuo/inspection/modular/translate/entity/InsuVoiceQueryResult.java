@@ -14,20 +14,28 @@ import lombok.Data;
 @Data
 @TableName("insu_voice_query_result")
 public class InsuVoiceQueryResult {
-    /** 主键，自动递增 */
+    /**
+     * 主键，自动递增
+     */
     @TableId
     @Schema(description = "主键，自动递增")
     private Integer id;
 
-    /** INSU_VOICE_ID */
+    /**
+     * INSU_VOICE_ID
+     */
     @Schema(description = "INSU_VOICE_ID")
     private Integer insuVoiceId;
 
-    /** 任务Id */
+    /**
+     * 任务Id
+     */
     @Schema(description = "TASK_ID")
     private String taskId;
 
-    /** 查询结果 */
+    /**
+     * 查询结果
+     */
     @Schema(description = "QUERY_RESULT")
     private String queryResult;
 }

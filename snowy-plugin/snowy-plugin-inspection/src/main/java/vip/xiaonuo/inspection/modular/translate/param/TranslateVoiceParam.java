@@ -13,7 +13,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TranslateVoiceParam {
-    /** INSU_VOICE_ID */
+    /**
+     * INSU_VOICE_ID
+     */
     @Schema(description = "INSU_VOICE_ID")
     @NotNull(message = "INSU_VOICE_ID 不能为空")
     private Integer insuVoiceId;
