@@ -1,44 +1,46 @@
 package vip.xiaonuo.inspection.modular.inspection.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.*;
-import org.springframework.web.client.RestTemplate;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
+import lombok.extern.slf4j.Slf4j;
 
-/**
- * @author tanghaoyu
- * @date 2024/1/8
- * @description HTTP请求工具类
- */
+import java.util.Map;
+
+@Slf4j
 public class HttpUtil {
-    private static final RestTemplate restTemplate = new RestTemplate();
-    private static final Logger logger = LoggerFactory.getLogger(HttpUtil.class);
-
+    
     /**
      * 发送POST请求
      * @param url 请求URL
-     * @param requestBody 请求体
+     * @param body 请求体
+     * @param headers 请求头
+     * @param timeout 超时时间(毫秒)
      * @return 响应内容
      */
-    public static String post(String url, String requestBody) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        
-        HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
-        
-        logger.info("发送请求到: {}", url);
-        logger.debug("请求体: {}", requestBody);
-        
-        ResponseEntity<String> response = restTemplate.exchange(
-            url,
-            HttpMethod.POST,
-            entity,
-            String.class
-        );
-        
-        String responseBody = response.getBody();
-        logger.info("收到响应: {}", responseBody);
-        
-        return responseBody;
+    public static String post(String url, String body, Map<String, String> headers, int timeout) {
+        try {
+            HttpRequest request = HttpRequest.post(url)
+                .body(body)
+                .timeout(timeout);
+            
+            // 添加请求头
+            if (headers != null) {
+                headers.forEach(request::header);
+            }
+            
+            // 发送请求
+            HttpResponse response = request.execute();
+            
+            // 检查响应状态
+            if (response.isOk()) {
+                return response.body();
+            } else {
+                log.error("HTTP请求失败, 状态码: {}, 响应内容: {}", response.getStatus(), response.body());
+                throw new RuntimeException("HTTP请求失败: " + response.getStatus());
+            }
+        } catch (Exception e) {
+            log.error("HTTP请求异常", e);
+            throw new RuntimeException("HTTP请求异常: " + e.getMessage());
+        }
     }
 } 

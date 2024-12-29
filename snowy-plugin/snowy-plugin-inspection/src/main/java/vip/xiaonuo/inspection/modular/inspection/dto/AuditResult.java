@@ -1,24 +1,31 @@
 package vip.xiaonuo.inspection.modular.inspection.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author tanghaoyu
- * @date 2024/1/8
- * @description 质检结果数据传输对象
- */
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class AuditResult {
-    /** 说话人ID */
-    private String speakerId;
-    
-    /** 违规列表 */
-    private List<ViolationRule> violations;
-    
-    /** 质检总结 */
-    private AuditSummary auditSummary;
+    private List<SpeakerAudit> auditResults;
+
+    @Data
+    public static class SpeakerAudit {
+        private String speakerId;
+        private List<Violation> violations;
+        private AuditSummary auditSummary;
+    }
+
+    @Data
+    public static class Violation {
+        private String rule;
+        private String message;
+        private String describe;
+    }
+
+    @Data
+    public static class AuditSummary {
+        private Integer totalStatementsAudited;
+        private Integer totalViolationsFound;
+        private Map<String, Integer> violationsByRule;
+    }
 } 

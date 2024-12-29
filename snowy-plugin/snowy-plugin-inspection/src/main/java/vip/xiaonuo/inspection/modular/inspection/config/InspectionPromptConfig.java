@@ -12,11 +12,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "inspection.prompt")
 public class InspectionPromptConfig {
     /** 系统角色设定 */
-    private String systemRole;
+    private String systemRole = InspectionPromptTemplate.SYSTEM_ROLE;
     
     /** JSON格式模板 */
-    private String jsonTemplate;
-    
-    /** 质检规则提示 */
-    private String rulePrompt;
+    private String jsonTemplate = InspectionPromptTemplate.JSON_TEMPLATE;
 } 

@@ -19,6 +19,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import java.util.*;
 import vip.xiaonuo.inspection.modular.inspection.util.HttpUtil;
 import vip.xiaonuo.inspection.modular.inspection.service.InspectionRuleService;
+import vip.xiaonuo.inspection.modular.inspection.config.InspectionPromptTemplate;
+import vip.xiaonuo.inspection.modular.inspection.client.Ark;
 
 @Slf4j
 @Service
@@ -77,34 +79,58 @@ public class InspectionServiceImpl implements InspectionService {
     }
 
     private String getDialogContent(Integer insuVoiceId) {
-        // 从数据库获取对话内容并格式化
         List<InsuVoiceDialog> dialogs = dialogService.list(
             new QueryWrapper<InsuVoiceDialog>()
                 .eq("INSU_VOICE_ID", insuVoiceId)
                 .orderByAsc("START_TIME")
         );
-
-        StringBuilder content = new StringBuilder();
-        for (InsuVoiceDialog dialog : dialogs) {
-            content.append(dialog.getRole()).append(": ")
-                  .append(dialog.getDialogText())
-                  .append("|");
-        }
-        return content.toString();
+        return InspectionUtil.formatDialogContent(dialogs);
     }
 
     private AuditResult callInspectionApi(String dialogContent) {
+        // 获取规则提示语
+        String rulePrompt = inspectionRuleService.buildRulePrompt();
+        
+        // 构建完整的系统提示语
+        String fullPrompt = String.format(
+            InspectionPromptTemplate.PROMPT_TEMPLATE,
+            promptConfig.getSystemRole(),
+            rulePrompt,
+            promptConfig.getJsonTemplate()
+        );
+        
         // 构建API请求参数
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", inspectionApiConfig.getModel());
-        requestBody.put("messages", Arrays.asList(
-            createMessage("system", buildSystemPrompt()),
+        List<Map<String, String>> messages = Arrays.asList(
+            createMessage("system", fullPrompt),
             createMessage("user", dialogContent)
-        ));
+        );
+        requestBody.put("messages", messages);
 
-        // 调用API并处理响应
-        String response = HttpUtil.post(inspectionApiConfig.getBaseUrl(), JSONUtil.toJsonStr(requestBody));
-        return JSONUtil.toBean(response, AuditResult.class);
+        // 创建 Ark 客户端
+        Ark client = new Ark(
+            inspectionApiConfig.getApiKey(),
+            inspectionApiConfig.getBaseUrl(),
+            inspectionApiConfig.getTimeout(),
+            2  // max_retries
+        );
+
+        try {
+            // 调用API并处理响应
+            String response = client.chat.completions.create(
+                inspectionApiConfig.getModel(),
+                messages,
+                false  // stream
+            );
+
+            AuditResult result = InspectionUtil.parseApiResponse(response);
+            InspectionUtil.validateInspectionResult(result);
+            return result;
+        } finally {
+            // 确保关闭客户端
+            client.shutdown();
+        }
     }
 
     private Map<String, String> createMessage(String role, String content) {
@@ -114,28 +140,6 @@ public class InspectionServiceImpl implements InspectionService {
         return message;
     }
 
-    /**
-     * 构建完整的系统提示语
-     */
-    private String buildSystemPrompt() {
-        StringBuilder prompt = new StringBuilder();
-        prompt.append(promptConfig.getSystemRole())
-              .append("\n\n")
-              .append("质检规则如下：\n")
-              .append(inspectionRuleService.buildRulePrompt())
-              .append("\n\n")
-              .append("请按照以下JSON格式返回质检结果：\n")
-              .append(promptConfig.getJsonTemplate());
-        return prompt.toString();
-    }
-
-    private String getJsonTemplate() {
-        return promptConfig.getJsonTemplate();
-    }
-
-    private String getRulePrompt() {
-        return inspectionRuleService.buildRulePrompt();
-    }
 
     private void updateInspectionStatus(Integer insuVoiceId) {
         int updated = inspectionMapper.updateInspectionStatus(insuVoiceId, new Date());
