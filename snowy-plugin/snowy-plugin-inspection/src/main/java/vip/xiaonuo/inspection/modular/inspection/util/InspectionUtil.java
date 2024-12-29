@@ -48,8 +48,15 @@ public class InspectionUtil {
      * @param result 质检结果
      */
     public static void validateInspectionResult(AuditResult result) {
-        if (result == null || result.getViolations() == null) {
+        if (result == null || result.getAuditResults() == null || result.getAuditResults().isEmpty()) {
             throw new RuntimeException("无效的质检结果");
         }
+        
+        // 检查每个话者的审核结果
+        result.getAuditResults().forEach(speakerAudit -> {
+            if (speakerAudit.getViolations() == null || speakerAudit.getAuditSummary() == null) {
+                throw new RuntimeException("质检结果格式不完整");
+            }
+        });
     }
 } 
