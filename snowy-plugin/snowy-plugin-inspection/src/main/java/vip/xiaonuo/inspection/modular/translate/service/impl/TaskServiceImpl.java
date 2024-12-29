@@ -34,6 +34,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Autowired
     private ExternalApiConfig externalApiConfig;
+
     /**
      * 提交语音转文字任务并返回任务 ID
      *

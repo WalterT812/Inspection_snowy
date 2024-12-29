@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="vip.xiaonuo.inspection.modular.translate.mapper.InsuVoiceDialogMapper">
-
-<delete id="deleteByInsuVoiceIds">
-    DELETE FROM insu_voice_dialog 
-    WHERE INSU_VOICE_ID IN
-    <foreach collection="voiceIds" item="voiceId" open="(" separator="," close=")">
-        #{voiceId}
-    </foreach>
-</delete>
-
+    <delete id="deleteByInsuVoiceIds">
+        DELETE FROM insu_voice_dialog
+        WHERE INSU_VOICE_ID IN
+        <foreach collection="voiceIds" item="voiceId" open="(" separator="," close=")">
+            #{voiceId}
+        </foreach>
+    </delete>
 </mapper>

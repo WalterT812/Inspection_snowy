@@ -23,13 +23,15 @@ import jakarta.validation.constraints.NotBlank;
  * 存储录音Id参数
  *
  * @author tanghaoyu
- * @date  2024/12/13 12:08
+ * @date 2024/12/13 12:08
  **/
 @Getter
 @Setter
 public class InsuVoiceRecordIdParam {
 
-    /** 主键，自动递增 */
+    /**
+     * 主键，自动递增
+     */
     @Schema(description = "主键，自动递增", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "id不能为空")
     private Integer id;

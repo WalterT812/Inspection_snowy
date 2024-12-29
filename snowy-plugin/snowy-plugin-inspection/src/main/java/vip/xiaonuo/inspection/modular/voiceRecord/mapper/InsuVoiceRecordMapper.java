@@ -22,7 +22,7 @@ import java.util.List;
  * 存储录音Mapper接口
  *
  * @author tanghaoyu
- * @date  2024/12/13 12:08
+ * @date 2024/12/13 12:08
  **/
 public interface InsuVoiceRecordMapper extends BaseMapper<InsuVoiceRecord> {
     // 查询最大 INSU_VOICE_ID

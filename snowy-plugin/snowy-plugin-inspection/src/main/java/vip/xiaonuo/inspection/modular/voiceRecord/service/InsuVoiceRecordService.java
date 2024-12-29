@@ -26,7 +26,7 @@ import java.util.List;
  * 存储录音Service接口
  *
  * @author tanghaoyu
- * @date  2024/12/13 12:08
+ * @date 2024/12/13 12:08
  **/
 public interface InsuVoiceRecordService extends IService<InsuVoiceRecord> {
 
@@ -34,7 +34,7 @@ public interface InsuVoiceRecordService extends IService<InsuVoiceRecord> {
      * 获取存储录音分页
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      */
     Page<InsuVoiceRecord> page(InsuVoiceRecordPageParam insuVoiceRecordPageParam);
 
@@ -42,7 +42,7 @@ public interface InsuVoiceRecordService extends IService<InsuVoiceRecord> {
      * 添加存储录音
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      */
     void add(InsuVoiceRecordAddParam insuVoiceRecordAddParam);
 
@@ -50,7 +50,7 @@ public interface InsuVoiceRecordService extends IService<InsuVoiceRecord> {
      * 编辑存储录音
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      */
     void edit(InsuVoiceRecordEditParam insuVoiceRecordEditParam);
 
@@ -58,7 +58,7 @@ public interface InsuVoiceRecordService extends IService<InsuVoiceRecord> {
      * 删除存储录音
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      */
     void delete(List<InsuVoiceRecordIdParam> insuVoiceRecordIdParamList);
 
@@ -66,7 +66,7 @@ public interface InsuVoiceRecordService extends IService<InsuVoiceRecord> {
      * 获取存储录音详情
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      */
     InsuVoiceRecord detail(InsuVoiceRecordIdParam insuVoiceRecordIdParam);
 
@@ -74,7 +74,7 @@ public interface InsuVoiceRecordService extends IService<InsuVoiceRecord> {
      * 请求Entity
      *
      * @author tanghaoyu
-     * @date  2024/12/13 12:08
+     * @date 2024/12/13 12:08
      **/
     InsuVoiceRecord queryEntity(Integer id);
 }

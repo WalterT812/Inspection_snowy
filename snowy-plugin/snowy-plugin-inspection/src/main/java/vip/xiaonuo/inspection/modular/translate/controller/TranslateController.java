@@ -73,7 +73,7 @@ public class TranslateController {
         try {
             // 调用 submitTaskByInsuVoiceId 获取 SubmitTaskResponse 对象
             SubmitTaskResponse result = translateService.submitTaskByInsuVoiceId(insuVoiceId);
-            LoggerUtil.logRequest(null,result.getResp().toString(),null);
+            LoggerUtil.logRequest(null, result.getResp().toString(), null);
             return CommonResult.data(result.getResp());
         } catch (Exception e) {
             logger.error("任务提交失败", e);

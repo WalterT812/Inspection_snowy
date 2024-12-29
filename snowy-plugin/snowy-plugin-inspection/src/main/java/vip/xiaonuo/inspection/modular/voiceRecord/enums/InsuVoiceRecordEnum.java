@@ -18,12 +18,14 @@ import lombok.Getter;
  * 存储录音枚举
  *
  * @author tanghaoyu
- * @date  2024/12/13 12:08
+ * @date 2024/12/13 12:08
  **/
 @Getter
 public enum InsuVoiceRecordEnum {
 
-    /** 测试 */
+    /**
+     * 测试
+     */
     TEST("TEST");
 
     private final String value;

@@ -8,33 +8,47 @@ import lombok.Data;
 
 @Data
 @TableName("INSU_VOICE_DIALOG")
-public class InsuVoiceDialog{
-    /** 主键 */
+public class InsuVoiceDialog {
+    /**
+     * 主键
+     */
     @TableId
     @Schema(description = "主键")
     private Integer id;
 
-    /** 录音ID */
+    /**
+     * 录音ID
+     */
     @Schema(description = "录音ID")
     private Integer insuVoiceId;
 
-    /** 对话文本 */
+    /**
+     * 对话文本
+     */
     @Schema(description = "对话文本")
     private String dialogText;
 
-    /** 角色 */
+    /**
+     * 角色
+     */
     @Schema(description = "角色")
     private Integer role;
 
-    /** 开始时间 */
+    /**
+     * 开始时间
+     */
     @Schema(description = "开始时间")
     private Integer startTime;
 
-    /** 结束时间 */
+    /**
+     * 结束时间
+     */
     @Schema(description = "结束时间")
     private Integer endTime;
 
-    /** 对话文本编号 */
+    /**
+     * 对话文本编号
+     */
     @Schema(description = "对话文本编号")
     private String dialogTextId;
 

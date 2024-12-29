@@ -16,7 +16,9 @@ import java.util.Date;
 @Getter
 @Setter
 public class TranslateResultParam {
-    /** 对应 insu_voice_dialog 的 INSU_VOICE_ID */
+    /**
+     * 对应 insu_voice_dialog 的 INSU_VOICE_ID
+     */
     @Schema(description = "对应 insu_voice_dialog 的 INSU_VOICE_ID")
     private Integer insuVoiceId;
 }

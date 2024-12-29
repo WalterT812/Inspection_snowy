@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * 存储录音Service接口实现类
  *
  * @author tanghaoyu
- * @date  2024/12/13 12:08
+ * @date 2024/12/13 12:08
  **/
 @Service
 public class InsuVoiceRecordServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, InsuVoiceRecord> implements InsuVoiceRecordService {
@@ -46,7 +46,7 @@ public class InsuVoiceRecordServiceImpl extends ServiceImpl<InsuVoiceRecordMappe
     public Page<InsuVoiceRecord> page(InsuVoiceRecordPageParam insuVoiceRecordPageParam) {
         QueryWrapper<InsuVoiceRecord> queryWrapper = new QueryWrapper<InsuVoiceRecord>().checkSqlInjection();
         // 检查是否有排序字段和排序顺序
-        if(ObjectUtil.isAllNotEmpty(insuVoiceRecordPageParam.getSortField(), insuVoiceRecordPageParam.getSortOrder())) {
+        if (ObjectUtil.isAllNotEmpty(insuVoiceRecordPageParam.getSortField(), insuVoiceRecordPageParam.getSortOrder())) {
             CommonSortOrderEnum.validate(insuVoiceRecordPageParam.getSortOrder());
 
             // 判断排序字段是否是 INSU_VOICE_ID，如果是，则使用倒序排序
@@ -106,19 +106,19 @@ public class InsuVoiceRecordServiceImpl extends ServiceImpl<InsuVoiceRecordMappe
     public void delete(List<InsuVoiceRecordIdParam> insuVoiceRecordIdParamList) {
         // 1. 获取要删除记录的ID列表
         List<Integer> ids = CollStreamUtil.toList(insuVoiceRecordIdParamList, InsuVoiceRecordIdParam::getId);
-        
+
         // 2. 查询这些记录的 INSU_VOICE_ID
         List<InsuVoiceRecord> records = this.listByIds(ids);
         List<Integer> insuVoiceIds = records.stream()
                 .map(InsuVoiceRecord::getInsuVoiceId)
                 .collect(Collectors.toList());
-        
+
         // 3. 删除对话记录（通过 INSU_VOICE_ID）
         insuVoiceDialogMapper.deleteByInsuVoiceIds(insuVoiceIds);
-        
+
         // 4. 删除查询结果（通过 INSU_VOICE_ID）
         insuVoiceQueryResultMapper.deleteByInsuVoiceIds(insuVoiceIds);
-        
+
         // 5. 删除录音记录（通过 ID）
         this.baseMapper.deleteByIds(ids);
     }
@@ -131,7 +131,7 @@ public class InsuVoiceRecordServiceImpl extends ServiceImpl<InsuVoiceRecordMappe
     @Override
     public InsuVoiceRecord queryEntity(Integer id) {
         InsuVoiceRecord insuVoiceRecord = this.getById(id);
-        if(ObjectUtil.isEmpty(insuVoiceRecord)) {
+        if (ObjectUtil.isEmpty(insuVoiceRecord)) {
             throw new CommonException("存储录音不存在，id值为：{}", id);
         }
         return insuVoiceRecord;
