@@ -19,14 +19,24 @@
 							</a-tag>
 						</template>
 						<template v-if="column.dataIndex === 'action'">
-							<a-button
-								type="primary"
-								size="small"
-								@click="handleInspect(record)"
-								:disabled="record.isInspected === 1"
-							>
-								质检
-							</a-button>
+							<a-space>
+								<a-button
+									type="primary"
+									size="small"
+									@click="handleInspect(record)"
+									:disabled="record.isInspected === 1"
+								>
+									质检
+								</a-button>
+								<a-button
+									type="link"
+									size="small"
+									@click="handleView(record)"
+									:disabled="record.isInspected === 0"
+								>
+									查看
+								</a-button>
+							</a-space>
 						</template>
 					</template>
 				</s-table>
@@ -44,7 +54,41 @@
 							</a-tag>
 						</a-descriptions-item>
 					</a-descriptions>
-					<pre v-if="inspectionResult" class="result-content">{{ inspectionResult }}</pre>
+
+					<div class="result-wrapper">
+						<a-spin :spinning="loading">
+							<template v-if="inspectionResult">
+								<div class="result-section">
+									<h3>质检总结</h3>
+									<p>{{ inspectionResult.inspectionSummary }}</p>
+									<p class="score">总分：{{ inspectionResult.overallScore }}</p>
+								</div>
+								<div class="result-section" v-if="inspectionResult.auditResults?.length">
+									<h3>违规详情</h3>
+									<div v-for="(audit, index) in inspectionResult.auditResults" :key="index">
+										<div v-for="(violation, vIndex) in audit.violations" :key="vIndex">
+											<a-card class="violation-card">
+												<p><strong>规则：</strong>{{ violation.rule }}</p>
+												<p><strong>描述：</strong>{{ violation.message }}</p>
+												<p><strong>建议：</strong>{{ violation.suggestion }}</p>
+												<div class="evidence-list" v-if="violation.evidence?.length">
+													<h4>违规证据：</h4>
+													<div v-for="(item, eIndex) in violation.evidence" :key="eIndex" class="evidence-item">
+														<span class="dialog-id">对话{{ item.dialogId }}</span>
+														<span>{{ item.content }}</span>
+													</div>
+												</div>
+											</a-card>
+										</div>
+										<div class="performance-section" v-if="audit.performanceAnalysis">
+											<h4>表现分析：</h4>
+											<p>{{ audit.performanceAnalysis.overallComments }}</p>
+										</div>
+									</div>
+								</div>
+							</template>
+						</a-spin>
+					</div>
 				</div>
 				<a-empty v-else description="请选择录音进行质检" />
 			</a-col>
@@ -83,6 +127,7 @@ const columns = [
 
 const currentRecord = ref(null)
 const inspectionResult = ref(null)
+const loading = ref(false)
 const tableRef = ref()
 const toolConfig = { refresh: true, height: true, columnSetting: true, striped: false }
 
@@ -103,7 +148,6 @@ const options = {
 
 const loadData = (parameter) => {
 	return qualityApi.page(parameter).then((data) => {
-		console.log('加载的数据：', data)
 		return data
 	})
 }
@@ -111,16 +155,51 @@ const loadData = (parameter) => {
 const handleInspect = async (record) => {
 	try {
 		currentRecord.value = record
-		const response = await qualityApi.submitInspection({
+		loading.value = true
+		const data = await qualityApi.submitInspection({
 			insuVoiceId: record.insuVoiceId
 		})
-		if (response.code === 200) {
-			message.success('质检成功')
-			inspectionResult.value = JSON.stringify(response.data, null, 2)
-			tableRef.value?.refresh()
+
+		message.success('质检成功')
+
+		// 更新当前记录状态
+		currentRecord.value = {
+			...record,
+			isInspected: 1,
+			inspectionTime: new Date().toLocaleString()
 		}
+
+		// 刷新表格
+		await tableRef.value?.refresh()
+
+		// 直接调用 handleView 显示结果
+		await handleView(currentRecord.value)
+
 	} catch (error) {
 		message.error('质检失败：' + error.message)
+	} finally {
+		loading.value = false
+	}
+}
+
+const handleView = async (record) => {
+	try {
+		currentRecord.value = record
+		loading.value = true
+		const data = await qualityApi.getInspectionResult(record.insuVoiceId)
+		console.log('质检结果:', data)
+		inspectionResult.value = JSON.parse(data)
+		console.log('解析后的质检结果:', inspectionResult.value)
+		currentRecord.value = {
+			...record,
+			isInspected: 1,
+			inspectionTime: record.inspectionTime || new Date().toLocaleString()
+		}
+	} catch (error) {
+		console.error('获取质检结果失败:', error)
+		message.error('获取质检结果失败：' + error.message)
+	} finally {
+		loading.value = false
 	}
 }
 </script>
@@ -133,14 +212,48 @@ const handleInspect = async (record) => {
 	border-radius: 2px;
 }
 
-.result-content {
+.result-wrapper {
 	margin-top: 16px;
 	padding: 16px;
+}
+
+.result-section {
+	margin-bottom: 24px;
+}
+
+.result-section h3 {
+	margin-bottom: 16px;
+	color: #1890ff;
+}
+
+.score {
+	font-size: 18px;
+	font-weight: bold;
+	color: #52c41a;
+}
+
+.evidence-list {
+	margin: 8px 0;
+	padding: 8px;
 	background: #f5f5f5;
 	border-radius: 4px;
-	white-space: pre-wrap;
-	font-family: Consolas, Monaco, monospace;
-	font-size: 14px;
-	line-height: 1.6;
+}
+
+.evidence-item {
+	margin: 4px 0;
+	padding: 4px 8px;
+}
+
+.dialog-id {
+	margin-right: 8px;
+	padding: 2px 6px;
+	background: #1890ff;
+	color: white;
+	border-radius: 4px;
+}
+
+.suggestion {
+	margin-top: 8px;
+	color: #52c41a;
 }
 </style>

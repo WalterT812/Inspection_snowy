@@ -96,48 +96,38 @@ C级规则（轻微违规）：
 
 请按照以下JSON格式返回质检结果：
 {
-  "audit_results": [
+  "auditResults": [
     {
-      "speaker_id": "1",
-      "role": "坐席",
+      "speakerId": "1",
+      "role": 1,
       "violations": [
         {
           "rule": "规则编号:规则描述",
           "message": "违规内容描述",
-          "dialog_refs": ["9", "11", "17", "19"],
+          "dialogRefs": ["11", "17", "19"],
           "evidence": [
             {
-              "dialog_id": "11",
-              "role": "1",
-              "content": "您好，我是XX保险的客服专员"
-            },
-            {
-              "dialog_id": "17",
-              "role": "2",
-              "content": "我现在不需要保险"
-            },
-            {
-              "dialog_id": "19",
-              "role": "1",
-              "content": "这个产品性价比很高，建议您考虑一下"
+              "dialogId": "11",
+              "role": 1,
+              "content": "违规对话内容"
             }
           ],
           "suggestion": "改进建议"
         }
       ],
-      "performance_analysis": {
-        "overall_comments": "整体表现评价"
+      "performanceAnalysis": {
+        "overallComments": "整体表现评价"
       },
-      "audit_summary": {
-        "total_statements": 100,
-        "total_violations": 2,
-        "violations_by_rule": {
+      "auditSummary": {
+        "totalStatements": 100,
+        "totalViolations": 2,
+        "violationsByRule": {
           "A1": 1,
           "A2": 1
         }
       }
     }
   ],
-  "overall_score": 85,
-  "inspection_summary": "质检总结和建议"
+  "overallScore": 85,
+  "inspectionSummary": "质检总结和建议"
 } 

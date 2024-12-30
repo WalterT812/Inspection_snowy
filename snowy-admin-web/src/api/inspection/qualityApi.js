@@ -16,5 +16,9 @@ export default {
     // 提交质检
     submitInspection(data) {
         return request('submit', data, 'post')
+    },
+    // 获取质检结果
+    getInspectionResult(insuVoiceId) {
+        return request('result', { insuVoiceId }, 'get')
     }
 }

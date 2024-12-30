@@ -81,7 +81,7 @@ public class InsuVoiceRecordEditParam {
     /**
      * 质检完成时间
      */
-    @Schema(description = "翻译完成时间")
+    @Schema(description = "质检完成时间")
     private Date inspectionTime;
 
     /**

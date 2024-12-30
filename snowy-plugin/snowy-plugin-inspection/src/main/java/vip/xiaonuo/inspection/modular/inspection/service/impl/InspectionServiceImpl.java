@@ -16,6 +16,7 @@ import vip.xiaonuo.inspection.modular.inspection.util.InspectionUtil;
 import vip.xiaonuo.inspection.modular.translate.entity.InsuVoiceDialog;
 import vip.xiaonuo.inspection.modular.translate.service.InsuVoiceDialogService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 
 import java.util.*;
 
@@ -31,6 +32,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import vip.xiaonuo.common.page.CommonPageRequest;
 import cn.hutool.core.util.StrUtil;
 import vip.xiaonuo.common.enums.CommonSortOrderEnum;
+import vip.xiaonuo.common.exception.CommonException;
 
 @Slf4j
 @Service
@@ -58,34 +60,57 @@ public class InspectionServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, In
         log.info("开始质检任务，录音ID: {}", insuVoiceId);
 
         try {
-            // 1. 获取对话内容
             String dialogContent = getDialogContent(insuVoiceId);
-            log.info("对话内容: {}", dialogContent);
-
-            // 2. 调用质检API
             AuditResult auditResult = callInspectionApi(dialogContent);
-            log.info("质检结果: {}", JSONUtil.toJsonStr(auditResult));
-
-            // 暂时注释掉保存和更新状态的代码
-            // saveInspectionResult(insuVoiceId, JSONUtil.toJsonStr(auditResult));
-            // updateInspectionStatus(insuVoiceId);
-
+            
+            // 添加结果验证
+            InspectionUtil.validateInspectionResult(auditResult);
+            
+            // 记录角色信息
+            InspectionUtil.RoleInfo roleInfo = new InspectionUtil.RoleInfo(auditResult);
+            log.info("角色判断结果 - 坐席ID: {}, 客户ID: {}", 
+                roleInfo.getStaffRole(), roleInfo.getCustomerRole());
+            
+            // 保存结果
+            saveInspectionResult(insuVoiceId, JSONUtil.toJsonStr(auditResult));
+            
             return auditResult;
         } catch (Exception e) {
             log.error("质检任务执行失败", e);
-            throw new RuntimeException("质检任务执行失败: " + e.getMessage());
+            throw new CommonException("质检任务执行失败: " + e.getMessage());
         }
     }
 
     @Override
     public void saveInspectionResult(Integer insuVoiceId, String result) {
-        InsuVoiceInspection inspection = new InsuVoiceInspection();
-        inspection.setInsuVoiceId(insuVoiceId);
-        inspection.setInspectionResult(result);
-        inspection.setInspectionTime(new Date());
-        inspection.setInspectionStatus(1);
+        log.info("开始保存质检结果，录音ID: {}", insuVoiceId);
+        try {
+            // 1. 保存质检结果到 INSU_VOICE_INSPECTION 表
+            InsuVoiceInspection inspection = new InsuVoiceInspection();
+            inspection.setInsuVoiceId(insuVoiceId);
+            inspection.setInspectionResult(result);
+            inspection.setInspectionTime(new Date());
+            inspection.setInspectionStatus(1);
+            inspectionMapper.insert(inspection);
+            log.info("质检结果保存成功");
 
-        inspectionMapper.insert(inspection);
+            // 2. 更新 INSU_VOICE_RECORD 表的质检状态和时间
+            InsuVoiceRecord record = new InsuVoiceRecord();
+            record.setInsuVoiceId(insuVoiceId);
+            record.setIsInspected(1);
+            record.setInspectionTime(new Date());
+            
+            UpdateWrapper<InsuVoiceRecord> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("INSU_VOICE_ID", insuVoiceId);
+            
+            if (!this.update(record, updateWrapper)) {
+                throw new CommonException("更新质检状态失败");
+            }
+            log.info("质检状态更新成功");
+        } catch (Exception e) {
+            log.error("保存质检结果失败", e);
+            throw new CommonException("保存质检结果失败: " + e.getMessage());
+        }
     }
 
     private String getDialogContent(Integer insuVoiceId) {
