@@ -63,7 +63,9 @@
 					</a-space>
 				</template>
 				<template v-if="column.dataIndex === 'ruleStatus'">
-					{{ record.ruleStatus ? '启用' : '禁用' }}
+					<a-tag :color="record.ruleStatus ? 'success' : 'warning'">
+						{{ record.ruleStatus ? '已启用' : '已禁用' }}
+					</a-tag>
 				</template>
 			</template>
 		</s-table>
