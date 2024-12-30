@@ -44,6 +44,24 @@
 				</a-space>
 			</template>
 			<template #bodyCell="{ column, record }">
+				<template v-if="column.dataIndex === 'isTranslated'">
+					<a-tag :color="record.isTranslated ? 'success' : 'warning'">
+						{{ record.isTranslated ? '已翻译' : '未翻译' }}
+					</a-tag>
+				</template>
+				<template v-if="column.dataIndex === 'isQueried'">
+					<a-tag :color="record.isQueried ? 'success' : 'warning'">
+						{{ record.isQueried ? '已查询' : '未查询' }}
+					</a-tag>
+				</template>
+				<template v-if="column.dataIndex === 'isInspected'">
+					<a-tag :color="record.isInspected ? 'success' : 'warning'">
+						{{ record.isInspected ? '已质检' : '未质检' }}
+					</a-tag>
+				</template>
+				<template v-if="['uploadTime', 'translateTime', 'inspectionTime'].includes(column.dataIndex)">
+					<span>{{ record[column.dataIndex] ? formatDateTime(record[column.dataIndex]) : '-' }}</span>
+				</template>
 				<template v-if="column.dataIndex === 'action'">
 					<a-space>
 						<a-button @click="handleTranslate(record)" style="color: #1890ff;">翻译</a-button>
@@ -68,6 +86,7 @@
 <script setup name="voiceRecord">
 import {ref, h} from 'vue'
 import {cloneDeep} from 'lodash-es'
+import dayjs from 'dayjs'
 
 import Form from './form.vue'
 import queryForm from './queryForm.vue';
@@ -86,6 +105,11 @@ const refreshTable = () => {
 	debugger
 	tableRef.value.refresh(true);
 };
+
+const formatDateTime = (dateStr) => {
+	if (!dateStr) return '-'
+	return dayjs(dateStr).format('YYYY-MM-DD HH:mm:ss')
+}
 
 const columns = [
 	{
