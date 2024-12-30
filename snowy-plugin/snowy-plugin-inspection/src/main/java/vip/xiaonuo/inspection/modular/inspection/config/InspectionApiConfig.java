@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  */
 @Data
 @Component
-@ConfigurationProperties(prefix = "inspection.api")
+@ConfigurationProperties(prefix = "inspection")
 public class InspectionApiConfig {
     /** API密钥 */
     private String apiKey;

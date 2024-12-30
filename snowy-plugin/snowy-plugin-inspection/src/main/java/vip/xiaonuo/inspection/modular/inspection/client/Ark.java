@@ -6,7 +6,6 @@ import lombok.Getter;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Ark {
     private final ArkService service;

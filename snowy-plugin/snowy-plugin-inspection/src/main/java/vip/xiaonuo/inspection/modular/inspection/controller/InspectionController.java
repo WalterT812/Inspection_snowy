@@ -1,20 +1,20 @@
 package vip.xiaonuo.inspection.modular.inspection.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import vip.xiaonuo.common.annotation.CommonLog;
 import vip.xiaonuo.common.pojo.CommonResult;
 import vip.xiaonuo.inspection.modular.inspection.dto.AuditResult;
 import vip.xiaonuo.inspection.modular.inspection.param.InspectionParam;
 import vip.xiaonuo.inspection.modular.inspection.service.InspectionService;
+import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
+import vip.xiaonuo.inspection.modular.voiceRecord.param.InsuVoiceRecordPageParam;
 
 @Tag(name = "质检控制器")
 @RestController
@@ -26,6 +26,13 @@ public class InspectionController {
 
     @Resource
     private InspectionService inspectionService;
+
+    @Operation(summary = "获取质检分页列表")
+    @GetMapping("/page")
+    public CommonResult<Page<InsuVoiceRecord>> page(InsuVoiceRecordPageParam param) {
+        logger.info("获取质检分页列表，参数：{}", param);
+        return CommonResult.data(inspectionService.page(param));
+    }
 
     @Operation(summary = "提交质检任务")
     @CommonLog("提交质检任务")
