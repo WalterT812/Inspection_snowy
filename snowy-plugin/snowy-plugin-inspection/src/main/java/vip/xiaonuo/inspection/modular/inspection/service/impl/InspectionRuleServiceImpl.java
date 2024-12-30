@@ -1,7 +1,6 @@
 package vip.xiaonuo.inspection.modular.inspection.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
@@ -12,14 +11,6 @@ import vip.xiaonuo.inspection.modular.inspection.service.InspectionRuleService;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.stereotype.Service;
-import vip.xiaonuo.inspection.modular.inspection.entity.InsuInspectionRule;
-import vip.xiaonuo.inspection.modular.inspection.mapper.InsuInspectionRuleMapper;
-import vip.xiaonuo.inspection.modular.inspection.service.InspectionRuleService;
-import vip.xiaonuo.inspection.modular.inspection.param.InspectionRulePageParam;
 import vip.xiaonuo.inspection.modular.inspection.enums.CommonSortOrderEnum;
 import vip.xiaonuo.inspection.modular.inspection.param.InspectionRuleAddParam;
 import vip.xiaonuo.inspection.modular.inspection.param.InspectionRuleEditParam;

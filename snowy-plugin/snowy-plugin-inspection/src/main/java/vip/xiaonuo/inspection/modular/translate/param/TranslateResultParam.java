@@ -1,13 +1,8 @@
 package vip.xiaonuo.inspection.modular.translate.param;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Date;
-
 /**
  * @author tanghaoyu
  * @date 2024/12/18
