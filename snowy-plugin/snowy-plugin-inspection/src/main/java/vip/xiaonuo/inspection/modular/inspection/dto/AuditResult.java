@@ -20,7 +20,11 @@ public class AuditResult {
     public static class SpeakerAudit {
         @JsonProperty("speaker_id")
         private String speakerId;
+        
+        @JsonProperty("role")
         private Integer role;
+        
+        @JsonProperty("violations")
         private List<Violation> violations;
         
         @JsonProperty("performance_analysis")
@@ -32,17 +36,30 @@ public class AuditResult {
 
     @Data
     public static class Violation {
+        @JsonProperty("rule")
         private String rule;
+        
+        @JsonProperty("message")
         private String message;
+        
+        @JsonProperty("dialog_refs")
         private List<String> dialogRefs;
+        
+        @JsonProperty("evidence")
         private List<Evidence> evidence;
+        
+        @JsonProperty("suggestion")
         private String suggestion;
         
         @Data
         public static class Evidence {
             @JsonProperty("dialog_id")
             private String dialogId;
+            
+            @JsonProperty("role")
             private Integer role;
+            
+            @JsonProperty("content")
             private String content;
         }
     }

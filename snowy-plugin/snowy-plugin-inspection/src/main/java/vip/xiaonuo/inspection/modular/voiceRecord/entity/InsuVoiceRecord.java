@@ -85,4 +85,10 @@ public class InsuVoiceRecord {
     @Schema(description = "TASK_ID")
     private String taskId;
 
+    /**
+     * 质检完成时间
+     */
+    @Schema(description = "质检完成时间")
+    private Date inspectionTime;
+
 }

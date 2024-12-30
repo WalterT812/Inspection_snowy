@@ -2,6 +2,7 @@ package vip.xiaonuo.inspection.modular.inspection.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import vip.xiaonuo.common.exception.CommonException;
 import vip.xiaonuo.inspection.modular.inspection.dto.AuditResult;
 import vip.xiaonuo.inspection.modular.translate.entity.InsuVoiceDialog;
 
@@ -54,17 +55,69 @@ public class InspectionUtil {
      * @param result 质检结果
      */
     public static void validateInspectionResult(AuditResult result) {
-        // 暂时注释掉验证逻辑
-        /*
         if (result == null || result.getAuditResults() == null || result.getAuditResults().isEmpty()) {
-            throw new RuntimeException("无效的质检结果");
+            throw new CommonException("无效的质检结果");
         }
         
         result.getAuditResults().forEach(speakerAudit -> {
             if (speakerAudit.getViolations() == null || speakerAudit.getAuditSummary() == null) {
-                throw new RuntimeException("质检结果格式不完整");
+                throw new CommonException("质检结果格式不完整");
             }
+            
+            // 验证角色信息
+            if (speakerAudit.getRole() == null || 
+                (speakerAudit.getRole() != 1 && speakerAudit.getRole() != 2)) {
+                throw new CommonException("无效的角色信息");
+            }
+            
+            // 验证违规证据
+            speakerAudit.getViolations().forEach(violation -> {
+                if (violation.getEvidence() != null) {
+                    violation.getEvidence().forEach(evidence -> {
+                        if (evidence.getRole() == null || 
+                            (evidence.getRole() != 1 && evidence.getRole() != 2)) {
+                            throw new CommonException("无效的证据角色信息");
+                        }
+                    });
+                }
+            });
         });
-        */
+    }
+
+    public static class RoleInfo {
+        private Integer staffRole;  // 坐席角色ID（1或2）
+        private Integer customerRole;  // 客户角色ID（1或2）
+        
+        public RoleInfo(AuditResult result) {
+            if (!result.getAuditResults().isEmpty()) {
+                this.staffRole = result.getAuditResults().get(0).getRole();
+                this.customerRole = (staffRole == 1) ? 2 : 1;
+            }
+        }
+        
+        public Integer getStaffRole() {
+            return staffRole;
+        }
+        
+        public Integer getCustomerRole() {
+            return customerRole;
+        }
+        
+        public boolean isStaff(Integer role) {
+            return role != null && role.equals(staffRole);
+        }
+        
+        public boolean isCustomer(Integer role) {
+            return role != null && role.equals(customerRole);
+        }
+        
+        public String getRoleText(Integer role) {
+            if (isStaff(role)) {
+                return "坐席";
+            } else if (isCustomer(role)) {
+                return "客户";
+            }
+            return "未知角色";
+        }
     }
 } 
