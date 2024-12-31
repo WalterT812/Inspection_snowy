@@ -48,9 +48,8 @@ public class TranslateDataServiceImpl implements TranslateDataService {
             LoggerUtil.handleException("录音记录未找到，无法保存任务 ID", null);
         }
 
-        // 更新任务 ID 和翻译状态
+        // 更新任务 ID
         record.setTaskId(taskId);
-        record.setIsTranslated(1); // 表示任务已翻译
         record.setTranslateTime(new Date()); // 更新翻译时间
 
         boolean updated = insuVoiceRecordService.updateById(record);
