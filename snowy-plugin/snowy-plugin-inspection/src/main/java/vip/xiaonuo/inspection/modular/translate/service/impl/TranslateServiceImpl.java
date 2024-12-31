@@ -126,7 +126,6 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
             String jsonResultMap = JSONUtil.toJsonStr(resultMap);
             translateDataService.saveQueryResult(insuVoiceId, taskId, jsonResultMap);
 
-
             // 更新翻译状态为已完成
             record.setIsTranslated(1);
             this.updateById(record);

@@ -205,6 +205,7 @@ defineExpose({
 </script>
 
 <style scoped>
+/* 容器样式 */
 .detail-container {
     position: fixed;
     top: 0;
@@ -224,6 +225,7 @@ defineExpose({
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* 内容卡片样式 */
 .content-card {
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -232,6 +234,7 @@ defineExpose({
     flex-direction: column;
 }
 
+/* 翻译和质检内容样式 */
 .translation-content, .inspection-content {
     flex: 1;
     display: flex;
@@ -244,6 +247,7 @@ defineExpose({
     margin-bottom: 16px;
 }
 
+/* 滚动容器样式 */
 .scroll-container {
     flex: 1;
     overflow-y: auto;
@@ -255,7 +259,7 @@ defineExpose({
     margin-bottom: 16px;
 }
 
-/* 美化滚动条 */
+/* 滚动条样式 */
 .scroll-container::-webkit-scrollbar {
     width: 6px;
 }
@@ -360,6 +364,23 @@ defineExpose({
     position: relative;
 }
 
+.message.left .message-content {
+    background: white;
+    margin-right: auto;
+    border-top-left-radius: 2px;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.message.right .message-content {
+    background: #e6f7ff;
+    margin-left: auto;
+    border-top-right-radius: 2px;
+    border: 1px solid #91d5ff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* 消息头部样式 */
 .message-header {
     display: flex;
     justify-content: space-between;
@@ -379,6 +400,7 @@ defineExpose({
     color: #1890ff;
 }
 
+/* 时间样式 */
 .time {
     font-size: 12px;
     color: #999;
@@ -394,20 +416,41 @@ defineExpose({
     text-align: left;
 }
 
-.message-text {
-    line-height: 1.6;
-    word-break: break-word;
+/* 标号样式 */
+.dialog-number,
+.dialog-badge {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    background: #e6f7ff;
+    border-radius: 50%;
+    margin-right: 8px;
+    font-size: 12px;
+    color: #1890ff;
+    font-weight: bold;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+.message.right .dialog-number {
+    background: #e6f7ff;
+    color: #1890ff;
+    border: 1px solid #91d5ff;
+}
+
+/* 高亮样式 */
 .highlighted .message-content {
     border: 2px solid #1890ff;
 }
 
+/* 动画样式 */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* 违规卡片样式 */
 .violation-card {
     margin-bottom: 16px;
     border: 1px solid #d9d9d9;
@@ -416,6 +459,7 @@ defineExpose({
     background: #f9f9f9;
 }
 
+/* 证据列表样式 */
 .evidence-list {
     margin: 8px 0;
     padding: 8px;
@@ -423,6 +467,7 @@ defineExpose({
     border-radius: 4px;
 }
 
+/* 证据项样式 */
 .evidence-item {
     display: flex;
     align-items: flex-start;
@@ -443,18 +488,14 @@ defineExpose({
     line-height: 1.6;
 }
 
+/* 分数样式 */
 .score {
     font-size: 18px;
     font-weight: bold;
     color: #52c41a;
 }
 
-.info-section {
-    margin-bottom: 16px;
-    background: white;
-    border-radius: 8px;
-}
-
+/* 关闭按钮样式 */
 .close-button {
     color: #1890ff;
     font-weight: bold;
@@ -465,6 +506,7 @@ defineExpose({
     color: #40a9ff;
 }
 
+/* 时间容器样式 */
 .time-container {
     display: flex;
     justify-content: space-between;
