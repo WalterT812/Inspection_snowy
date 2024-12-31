@@ -27,9 +27,6 @@
 
 <script setup name="insuVoiceRecordForm">
 import { cloneDeep } from 'lodash-es';
-import { required } from '@/utils/formRules';
-import insuVoiceRecordApi from '@/api/inspection/insuVoiceRecordApi';
-import QueryTranslateApi from "@/api/inspection/queryTranslateApi";
 import {ref} from "vue";
 import {message} from "ant-design-vue";
 import { defineEmits } from 'vue';
@@ -50,7 +47,6 @@ const formData = ref({
 	inspectionTime: null, // 质检时间, 默认空
 	taskId: null // 任务Id, 默认空
 })
-const submitLoading = ref(false)
 
 const queryFormData = ref({
 	queryResult: null,
@@ -63,21 +59,27 @@ const onQuery = async (record) => {
 		.queryTaskResult({insuVoiceId: record.insuVoiceId})
 		.then((response) => {
 			const {code, msg, utterances} = response;
-			debugger
-			if (code === 200) {
-				// 状态码为200，表示成功
-				message.success(msg);
-			} else if (code === 204) {
-				message.info(msg);
-			}else if(code === 205){
-				message.warn(msg);
-			} else {
-				// 其他非预期的状态码
-				message.error('查询任务结果出现未知状态码，请稍后重试');
+
+			if (utterances) {
+				const resultJson = JSON.stringify(utterances, null, 2); // 添加格式化参数
+				queryFormData.value.queryResult = resultJson;
 			}
-			const resultJson = JSON.stringify(utterances);
-			queryFormData.value.queryResult = resultJson;
-			debugger
+
+			// 根据状态码显示不同消息
+			switch(code) {
+				case 200:
+					message.success(msg || '查询成功');
+					break;
+				case 204:
+					message.info(msg || '已查询过');
+					break;
+				case 205:
+					message.warning(msg || '翻译暂未完成');
+					break;
+				default:
+					message.error(msg || '查询失败，请稍后重试');
+			}
+
 			emit('refreshTable');
 		})
 		.catch((error) => {
@@ -111,11 +113,17 @@ const formRules = {
 	]
 }
 
-// 抛出函数
-defineExpose({
-	onOpen
-})
+// 在 queryForm.vue 的 script 部分添加：
+const setQueryResult = (result) => {
+  queryFormData.value.queryResult = result;
+};
 
+// 将此方法暴露出去
+defineExpose({
+  onOpen,
+  setQueryResult,
+  queryFormData  // 如果需要直接访问数据
+});
 </script>
 
 <style scoped>

@@ -62,12 +62,6 @@ public class InsuVoiceRecord {
     private Integer isInspected;
 
     /**
-     * 查询状态
-     */
-    @Schema(description = "查询状态")
-    private Integer isQueried;
-
-    /**
      * 上传时间
      */
     @Schema(description = "上传时间")

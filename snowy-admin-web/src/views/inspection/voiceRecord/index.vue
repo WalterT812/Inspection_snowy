@@ -64,13 +64,15 @@
 				</template>
 				<template v-if="column.dataIndex === 'action'">
 					<a-space>
+						<query-form ref="queryFormRef" @refreshTable="refreshTable"/>
 						<a-button @click="handleTranslate(record)" style="color: #1890ff;">翻译</a-button>
 						<a-divider type="vertical"/>
 						<Form ref="formRef"/>
 						<a-button @click="formRef.onOpen(record)" style="color: #1890ff">编辑</a-button>
 						<a-divider type="vertical"/>
-						<query-form ref="queryFormRef" @refreshTable="refreshTable"/>
-						<a-button @click="queryFormRef.onOpen(record)" style="color: #1890ff;">查询</a-button>
+						<a-button @click="openDetail(record)" :disabled="record.isTranslated === 0" style="color: #1890ff">
+							详情
+						</a-button>
 						<a-divider type="vertical"/>
 						<a-popconfirm title="确定要删除吗？" @confirm="deleteInsuVoiceRecord(record)">
 							<a-button>删除</a-button>
@@ -81,6 +83,7 @@
 		</s-table>
 
 	</a-card>
+	<detail-view ref="detailRef" />
 </template>
 
 <script setup name="voiceRecord">
@@ -92,17 +95,18 @@ import Form from './form.vue'
 import queryForm from './queryForm.vue';
 
 import insuVoiceRecordApi from '@/api/inspection/insuVoiceRecordApi'
-import translateApi from "@/api/inspection/translateApi"
 import {message} from 'ant-design-vue'
 import Clipboard from "clipboard";
+import translateApi from "@/api/inspection/translateApi";
+import DetailView from './detail.vue'
 
 const tableRef = ref()
 const formRef = ref()
 const queryFormRef = ref()
 const formR = ref()
 const toolConfig = {refresh: true, height: true, columnSetting: true, striped: false}
+
 const refreshTable = () => {
-	debugger
 	tableRef.value.refresh(true);
 };
 
@@ -173,11 +177,6 @@ const columns = [
 		align: 'center',
 	},
 	{
-		title: '查询状态',
-		dataIndex: 'isQueried',
-		align: 'center',
-	},
-	{
 		title: '质检状态',
 		dataIndex: 'isInspected',
 		align: 'center',
@@ -212,6 +211,7 @@ columns.push({
 })
 
 const selectedRowKeys = ref([])
+
 // 列表选择配置
 const options = {
 	alert: {
@@ -235,53 +235,78 @@ const loadData = (parameter) => {
 	})
 }
 
-// 翻译操作
+// 翻译并查询操作
 const handleTranslate = (record) => {
-	// 更新翻译状态，防止多次点击
-	record.isTranslated = 1
-	// 调用翻译 API
-	translateApi
-		.translateVoice({insuVoiceId: record.insuVoiceId})
-		.then((response) => {
-			console.log(response);
-			const {code, id, msg} = response;  // 获取返回的数据和消息
-			debugger
-			if (code === 204) {
-				// 状态码为204
-				message.info(msg);
-			} else if (code === 200) {
-				// 状态码为200
-				message.success(msg);
-			} else {
-				// 其他非预期的状态码
-				message.error('翻译请求出现未知状态码，请稍后重试');
-			}
-			refreshTable();
-		})
-		.catch((error) => {
-			message.error(error.msg || '翻译失败，请稍后重试');
-			// 这里catch中处理错误情况，也可以根据error的具体结构，比如error是否包含status等属性来进一步细分错误提示逻辑
-		});
-}
+	let retryCount = 0;
+	const MAX_RETRIES = 60; // 60次，即120秒
+	let loadingMessage = null;
+
+	const pollTranslation = () => {
+		retryCount++;
+		if (retryCount > MAX_RETRIES) {
+			if (loadingMessage) loadingMessage();
+			message.error('翻译超时，请稍后重试');
+			record.isTranslated = 0;
+			return;
+		}
+
+		if (loadingMessage) {
+			loadingMessage();
+		}
+		loadingMessage = message.loading(`正在翻译中，第 ${retryCount} 次查询...`, 0);
+
+		translateApi
+			.translate({ insuVoiceId: record.insuVoiceId })
+			.then((response) => {
+				const { code, msg, utterances } = response;
+
+				if (code === 200) {
+					loadingMessage();
+					message.success(msg || '翻译成功');
+					refreshTable();
+					if (utterances && queryFormRef.value) {
+						queryFormRef.value.onOpen(record);
+						queryFormRef.value.queryFormData.queryResult = JSON.stringify(utterances, null, 2);
+					}
+				} else if (code === 204) {
+					loadingMessage();
+					message.info(msg || '该语音文件已翻译');
+					refreshTable();
+					if (utterances && queryFormRef.value) {
+						queryFormRef.value.onOpen(record);
+						queryFormRef.value.queryFormData.queryResult = JSON.stringify(utterances, null, 2);
+					}
+				} else if (code === 205) {
+					setTimeout(() => pollTranslation(), 2000);
+				} else {
+					loadingMessage();
+					message.error('操作失败，请稍后重试');
+					record.isTranslated = 0;
+				}
+			})
+			.catch((error) => {
+				loadingMessage();
+				message.error(error.msg || '翻译失败，请稍后重试');
+				record.isTranslated = 0;
+			});
+	};
+
+	pollTranslation();
+};
+
+
 
 // 表单数据
 const formData = ref({
 	voiceUrl: '', // 添加 voiceUrl字段
 	isTranslated: 0, // 默认未翻译
 	isInspected: 0, // 默认未质检
-	isQueried: 0, // 默认未查询
 	uploadTime: null, // 默认上传时间为空, 后端处理
 	translateTime: null, // 翻译时间, 默认空
 	inspectionTime: null, // 质检时间, 默认空
 	taskId: null // 任务Id, 默认空
 })
 
-// 查询数据
-const queryFormData = ref({
-	insuVoiceId: null, // 录音Id
-	taskId: null, // 任务Id
-	queryResult: '' // 查询结果
-})
 
 const submitLoading = ref(false)
 
@@ -331,6 +356,20 @@ const deleteBatchInsuVoiceRecord = (params) => {
 	insuVoiceRecordApi.insuVoiceRecordDelete(params).then(() => {
 		tableRef.value.clearRefreshSelected()
 	})
+}
+
+const indexShow = ref(true)
+const detailRef = ref()
+
+const openDetail = (record) => {
+	indexShow.value = false
+	detailRef.value.openDetail(record)
+}
+
+// 监听详情页关闭
+const closeDetail = () => {
+	indexShow.value = true
+	refreshTable()
 }
 </script>
 
