@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
-import vip.xiaonuo.inspection.modular.translate.Util.HttpUtil;
-import vip.xiaonuo.inspection.modular.translate.Util.LoggerUtil;
-import vip.xiaonuo.inspection.modular.translate.config.ExternalApiConfig;
+import vip.xiaonuo.inspection.core.util.HttpUtil;
+import vip.xiaonuo.inspection.core.util.LoggerUtil;
+import vip.xiaonuo.inspection.core.config.ExternalApiConfig;
 import vip.xiaonuo.inspection.modular.translate.dto.QueryResponse;
 import vip.xiaonuo.inspection.modular.translate.dto.SubmitTaskRequestBody;
 import vip.xiaonuo.inspection.modular.translate.dto.SubmitTaskResponse;
@@ -50,7 +50,7 @@ public class TaskServiceImpl implements TaskService {
         SubmitTaskRequestBody requestBody = SubmitTaskRequestBody.build(translateParam);
 
         try {
-            String response = HttpUtil.postRequest(url, headers, requestBody);
+            String response = HttpUtil.postWithRestTemplate(url, headers, requestBody);
             return extractTaskIdFromResponse(response);
         } catch (Exception e) {
             logger.error("提交任务失败", e);
@@ -99,7 +99,7 @@ public class TaskServiceImpl implements TaskService {
         HttpHeaders headers = HttpUtil.buildHeaders(token);
 
         try {
-            return HttpUtil.postRequest(url, headers, queryParams);
+            return HttpUtil.postWithRestTemplate(url, headers, queryParams);
         } catch (Exception e) {
             logger.error("查询任务失败", e);
             throw new LoggerUtil.TranslateServiceException("查询任务失败", e);

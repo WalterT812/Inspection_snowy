@@ -1,93 +1,95 @@
 <template>
-	<a-card :bordered="false">
+	<div>
+		<!-- 主页面内容 -->
+		<a-card :bordered="false" v-if="indexShow">
+			<div style="margin-bottom: 16px; display: flex; align-items: center;">
+				<!-- 使用 flex 布局确保所有元素在同一行内 -->
+				<a-form ref="formR" :model="formData" :rules="formRules" layout="inline" style="margin-right: 8px;">
+					<a-form-item label="录音URL：" name="voiceUrl" style="margin-bottom: 0;">
+						<a-input
+							v-model:value="formData.voiceUrl"
+							placeholder="请输入录音文件的 URL"
+							style="width: 400px; margin-right: 8px;"
+							allow-clear
+						/>
+					</a-form-item>
+				</a-form>
+				<!-- 按钮与输入框在同一行内，靠左对齐 -->
+				<a-button type="primary" @click="onSubmit" :loading="submitLoading" style="margin-left: 8px;">
+					<template #icon>
+						<plus-outlined/>
+					</template>
+					插入
+				</a-button>
+			</div>
 
-		<div style="margin-bottom: 16px; display: flex; align-items: center;">
-			<!-- 使用 flex 布局确保所有元素在同一行内 -->
-			<a-form ref="formR" :model="formData" :rules="formRules" layout="inline" style="margin-right: 8px;">
-				<a-form-item label="录音URL：" name="voiceUrl" style="margin-bottom: 0;">
-					<a-input
-						v-model:value="formData.voiceUrl"
-						placeholder="请输入录音文件的 URL"
-						style="width: 400px; margin-right: 8px;"
-						allow-clear
-					/>
-				</a-form-item>
-			</a-form>
-			<!-- 按钮与输入框在同一行内，靠左对齐 -->
-			<a-button type="primary" @click="onSubmit" :loading="submitLoading" style="margin-left: 8px;">
-				<template #icon>
-					<plus-outlined/>
-				</template>
-				插入
-			</a-button>
-		</div>
-
-		<s-table
-			ref="tableRef"
-			:columns="columns"
-			:data="loadData"
-			:alert="options.alert.show"
-			bordered
-			:row-key="(record) => record.id"
-			:tool-config="toolConfig"
-			:row-selection="options.rowSelection"
-		>
-			<template #operator class="table-operator">
-				<a-space>
-					<xn-batch-button
-						v-if="hasPerm('insuVoiceRecordBatchDelete')"
-						buttonName="批量删除"
-						icon="DeleteOutlined"
-						:selectedRowKeys="selectedRowKeys"
-						@batchCallBack="deleteBatchInsuVoiceRecord"
-					/>
-				</a-space>
-			</template>
-			<template #bodyCell="{ column, record }">
-				<template v-if="column.dataIndex === 'isTranslated'">
-					<a-tag :color="record.isTranslated ? 'success' : 'warning'">
-						{{ record.isTranslated ? '已翻译' : '未翻译' }}
-					</a-tag>
-				</template>
-				<template v-if="column.dataIndex === 'isQueried'">
-					<a-tag :color="record.isQueried ? 'success' : 'warning'">
-						{{ record.isQueried ? '已查询' : '未查询' }}
-					</a-tag>
-				</template>
-				<template v-if="column.dataIndex === 'isInspected'">
-					<a-tag :color="record.isInspected ? 'success' : 'warning'">
-						{{ record.isInspected ? '已质检' : '未质检' }}
-					</a-tag>
-				</template>
-				<template v-if="['uploadTime', 'translateTime', 'inspectionTime'].includes(column.dataIndex)">
-					<span>{{ record[column.dataIndex] ? formatDateTime(record[column.dataIndex]) : '-' }}</span>
-				</template>
-				<template v-if="column.dataIndex === 'action'">
+			<s-table
+				ref="tableRef"
+				:columns="columns"
+				:data="loadData"
+				:alert="options.alert.show"
+				bordered
+				:row-key="(record) => record.id"
+				:tool-config="toolConfig"
+				:row-selection="options.rowSelection"
+			>
+				<template #operator class="table-operator">
 					<a-space>
-						<query-form ref="queryFormRef" @refreshTable="refreshTable"/>
-						<a-button @click="handleTranslate(record)" style="color: #1890ff;">翻译</a-button>
-						<a-divider type="vertical"/>
-						<Form ref="formRef"/>
-						<a-button @click="formRef.onOpen(record)" style="color: #1890ff">编辑</a-button>
-						<a-divider type="vertical"/>
-						<a-button @click="openDetail(record)" :disabled="record.isTranslated === 0" style="color: #1890ff">
-							详情
-						</a-button>
-						<a-divider type="vertical"/>
-						<a-popconfirm title="确定要删除吗？" @confirm="deleteInsuVoiceRecord(record)">
-							<a-button>删除</a-button>
-						</a-popconfirm>
+						<xn-batch-button
+							v-if="hasPerm('insuVoiceRecordBatchDelete')"
+							buttonName="批量删除"
+							icon="DeleteOutlined"
+							:selectedRowKeys="selectedRowKeys"
+							@batchCallBack="deleteBatchInsuVoiceRecord"
+						/>
 					</a-space>
 				</template>
-			</template>
-		</s-table>
+				<template #bodyCell="{ column, record }">
+					<template v-if="column.dataIndex === 'isTranslated'">
+						<a-tag :color="record.isTranslated ? 'success' : 'warning'">
+							{{ record.isTranslated ? '已翻译' : '未翻译' }}
+						</a-tag>
+					</template>
+					<template v-if="column.dataIndex === 'isQueried'">
+						<a-tag :color="record.isQueried ? 'success' : 'warning'">
+							{{ record.isQueried ? '已查询' : '未查询' }}
+						</a-tag>
+					</template>
+					<template v-if="column.dataIndex === 'isInspected'">
+						<a-tag :color="record.isInspected ? 'success' : 'warning'">
+							{{ record.isInspected ? '已质检' : '未质检' }}
+						</a-tag>
+					</template>
+					<template v-if="['uploadTime', 'translateTime', 'inspectionTime'].includes(column.dataIndex)">
+						<span>{{ record[column.dataIndex] ? formatDateTime(record[column.dataIndex]) : '-' }}</span>
+					</template>
+					<template v-if="column.dataIndex === 'action'">
+						<a-space>
+							<query-form ref="queryFormRef" @refreshTable="refreshTable"/>
+							<a-button @click="handleTranslate(record)" style="color: #1890ff;">翻译</a-button>
+							<a-divider type="vertical"/>
+							<Form ref="formRef"/>
+							<a-button @click="formRef.onOpen(record)" style="color: #1890ff">编辑</a-button>
+							<a-divider type="vertical"/>
+							<a @click="openDetail(record)">详情</a>
+							<a-divider type="vertical"/>
+							<a-popconfirm title="确定要删除吗？" @confirm="deleteInsuVoiceRecord(record)">
+								<a-button>删除</a-button>
+							</a-popconfirm>
+						</a-space>
+					</template>
+				</template>
+			</s-table>
 
-	</a-card>
-	<detail-view ref="detailRef" />
+		</a-card>
+
+		<!-- 详情页面 -->
+		<detail ref="detailRef" @close="handleDetailClose" />
+	</div>
 </template>
 
-<script setup name="voiceRecord">
-import {ref, h} from 'vue'
+<script setup name="voiceRecordIndex">
+import {ref, h, nextTick} from 'vue'
 import {cloneDeep} from 'lodash-es'
 import dayjs from 'dayjs'
 
@@ -98,7 +100,7 @@ import insuVoiceRecordApi from '@/api/inspection/insuVoiceRecordApi'
 import {message} from 'ant-design-vue'
 import Clipboard from "clipboard";
 import translateApi from "@/api/inspection/translateApi";
-import DetailView from './detail.vue'
+import Detail from './detail.vue'
 
 const tableRef = ref()
 const formRef = ref()
@@ -361,15 +363,19 @@ const deleteBatchInsuVoiceRecord = (params) => {
 const indexShow = ref(true)
 const detailRef = ref()
 
+// 打开详情
 const openDetail = (record) => {
 	indexShow.value = false
-	detailRef.value.openDetail(record)
+	nextTick(() => {
+		detailRef.value.openDetail(record)
+	})
 }
 
-// 监听详情页关闭
-const closeDetail = () => {
+// 关闭详情
+const handleDetailClose = () => {
 	indexShow.value = true
-	refreshTable()
+	// 可以在这里刷新表格数据
+	tableRef.value.refresh()
 }
 </script>
 

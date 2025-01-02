@@ -1,4 +1,4 @@
-package vip.xiaonuo.inspection.modular.inspection.client;
+package vip.xiaonuo.inspection.core.client;
 
 import com.volcengine.ark.runtime.model.completion.chat.*;
 import com.volcengine.ark.runtime.service.ArkService;

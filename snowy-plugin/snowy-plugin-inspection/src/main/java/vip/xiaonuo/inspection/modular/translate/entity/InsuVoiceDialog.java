@@ -51,12 +51,4 @@ public class InsuVoiceDialog {
      */
     @Schema(description = "对话文本编号")
     private String dialogTextId;
-
-//    /** 创建时间 */
-//    @Schema(description = "创建时间")
-//    private Date createTime;
-//
-//    /** 更新时间 */
-//    @Schema(description = "更新时间")
-//    private Date updateTime;
 }

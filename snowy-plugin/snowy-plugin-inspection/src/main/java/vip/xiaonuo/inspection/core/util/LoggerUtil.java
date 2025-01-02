@@ -1,4 +1,4 @@
-package vip.xiaonuo.inspection.modular.translate.Util;
+package vip.xiaonuo.inspection.core.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

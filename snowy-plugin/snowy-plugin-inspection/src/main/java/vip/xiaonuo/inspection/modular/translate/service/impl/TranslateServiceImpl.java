@@ -5,11 +5,9 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import vip.xiaonuo.common.exception.CommonException;
-import vip.xiaonuo.inspection.modular.translate.Util.LoggerUtil;
-import vip.xiaonuo.inspection.modular.translate.config.ExternalApiConfig;
+import vip.xiaonuo.inspection.core.util.LoggerUtil;
+import vip.xiaonuo.inspection.core.config.ExternalApiConfig;
 import vip.xiaonuo.inspection.modular.translate.dto.QueryResponse;
 import vip.xiaonuo.inspection.modular.translate.dto.QueryTaskResponse;
 import vip.xiaonuo.inspection.modular.translate.dto.SubmitTaskResponse;
@@ -21,7 +19,7 @@ import vip.xiaonuo.inspection.modular.translate.service.InsuVoiceDialogService;
 import vip.xiaonuo.inspection.modular.translate.service.TranslateService;
 import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 import vip.xiaonuo.inspection.modular.voiceRecord.mapper.InsuVoiceRecordMapper;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import vip.xiaonuo.inspection.modular.translate.service.RoleIdentificationService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,6 +46,8 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
     private InsuVoiceDialogService insuVoiceDialogService;
     @Autowired
     private ExternalApiConfig externalApiConfig;
+    @Autowired
+    private RoleIdentificationService roleIdentificationService;
 
     /**
      * 翻译并查询
@@ -119,20 +119,20 @@ public class TranslateServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, Ins
 
             // 处理查询结果
             QueryTaskResponse processedResult = queryResultProcessor.processQueryResult(response);
+            List<Utterance> utterances = processedResult.getUtterances();
+
 
             // 保存查询结果到数据库
             Map<String, Object> resultMap = new HashMap<>();
-            resultMap.put("utterances", processedResult.getUtterances());
+            resultMap.put("utterances", utterances);
             String jsonResultMap = JSONUtil.toJsonStr(resultMap);
             translateDataService.saveQueryResult(insuVoiceId, taskId, jsonResultMap);
-
 
             // 更新翻译状态为已完成
             record.setIsTranslated(1);
             this.updateById(record);
             
             // 将 utterances 保存到数据库
-            List<Utterance> utterances = processedResult.getUtterances();
             if (utterances != null && !utterances.isEmpty()) {
                 List<InsuVoiceDialog> dialogRecords = new ArrayList<>();
                 int dialogTextId = 1; // 从1开始

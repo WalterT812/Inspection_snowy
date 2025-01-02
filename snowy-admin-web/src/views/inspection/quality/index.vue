@@ -47,7 +47,7 @@
 				<div v-if="currentRecord" class="inspection-result">
 					<a-descriptions bordered>
 						<a-descriptions-item label="录音ID">{{ currentRecord.insuVoiceId }}</a-descriptions-item>
-						<a-descriptions-item label="质检时间">{{ currentRecord.inspectionTime }}</a-descriptions-item>
+						<a-descriptions-item label="质检时间">{{ formatDateTime(currentRecord.inspectionTime) }}</a-descriptions-item>
 						<a-descriptions-item label="质检状态">
 							<a-tag :color="currentRecord.isInspected ? 'success' : 'warning'">
 								{{ currentRecord.isInspected ? '已质检' : '未质检' }}
@@ -100,6 +100,7 @@
 import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import qualityApi from '@/api/inspection/qualityApi'
+import { formatDateTime } from '@/utils/dateUtil'
 
 const columns = [
 	{

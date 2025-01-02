@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import vip.xiaonuo.inspection.modular.translate.Util.LoggerUtil;
+import vip.xiaonuo.inspection.core.util.LoggerUtil;
 import vip.xiaonuo.inspection.modular.translate.entity.InsuVoiceQueryResult;
 import vip.xiaonuo.inspection.modular.translate.mapper.InsuVoiceQueryResultMapper;
 import vip.xiaonuo.inspection.modular.translate.service.TranslateDataService;

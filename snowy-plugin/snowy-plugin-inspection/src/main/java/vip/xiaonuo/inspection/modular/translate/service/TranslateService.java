@@ -2,7 +2,6 @@ package vip.xiaonuo.inspection.modular.translate.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import vip.xiaonuo.inspection.modular.translate.dto.QueryTaskResponse;
-import vip.xiaonuo.inspection.modular.translate.dto.SubmitTaskResponse;
 import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 
 /**

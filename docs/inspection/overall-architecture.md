@@ -19,6 +19,8 @@
      - INSU_VOICE_RECORD：录音记录  
      - INSU_VOICE_DIALOG：对话记录  
      - INSU_VOICE_INSPECTION：质检结果表  
+     - INSU_VOICE_QUERY_RESULT：查询结果表
+     - INSU_INSPECTION_RULE：质检规则表
 
 下图是整体的数据流与服务间调用的简要示意图：
 ```mermaid
