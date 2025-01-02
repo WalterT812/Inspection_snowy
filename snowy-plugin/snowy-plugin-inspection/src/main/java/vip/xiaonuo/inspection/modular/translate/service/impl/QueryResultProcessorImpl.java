@@ -1,12 +1,14 @@
 package vip.xiaonuo.inspection.modular.translate.service.impl;
 
 import cn.hutool.json.JSONUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import vip.xiaonuo.inspection.modular.translate.Util.LoggerUtil;
+import vip.xiaonuo.inspection.core.util.LoggerUtil;
 import vip.xiaonuo.inspection.modular.translate.dto.QueryResponse;
 import vip.xiaonuo.inspection.modular.translate.dto.QueryTaskResponse;
 import vip.xiaonuo.inspection.modular.translate.dto.Utterance;
 import vip.xiaonuo.inspection.modular.translate.service.QueryResultProcessor;
+import vip.xiaonuo.inspection.modular.translate.service.RoleIdentificationService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,9 @@ import java.util.List;
  */
 @Service
 public class QueryResultProcessorImpl implements QueryResultProcessor {
+
+    @Autowired
+    private RoleIdentificationService roleIdentificationService;
 
     /**
      * 处理查询结果，提取utterances中的内容，并去掉additions的内容
@@ -34,9 +39,27 @@ public class QueryResultProcessorImpl implements QueryResultProcessor {
         LoggerUtil.logRequest("处理查询结果", "原始数据", JSONUtil.toJsonStr(queryResponse));
 
         if (queryResponse != null && queryResponse.getResp() != null && queryResponse.getResp().getUtterances() != null) {
+            // 获取坐席角色，如果识别失败则使用默认值
+            String staffSpeaker = roleIdentificationService.identifyStaffSpeaker(queryResponse.getResp().getUtterances());
+            
+            // 如果角色识别失败，使用默认规则（例如第一个说话的是坐席）
+            if (staffSpeaker == null) {
+                LoggerUtil.logRequest("角色识别", "使用默认规则", "第一个说话的为坐席");
+                staffSpeaker = "1";
+            }
+            
+            LoggerUtil.logRequest("角色识别", "识别结果", String.format("坐席角色为 Speaker %s", staffSpeaker));
+            
             for (Utterance utterance : queryResponse.getResp().getUtterances()) {
                 Utterance newUtterance = new Utterance();
-                newUtterance.setSpeaker(utterance.getAdditions() != null ? utterance.getAdditions().getSpeaker() : null);
+                String currentSpeaker = utterance.getAdditions() != null ? utterance.getAdditions().getSpeaker() : null;
+                
+                if (currentSpeaker != null && staffSpeaker != null) {
+                    newUtterance.setSpeaker(currentSpeaker.equals(staffSpeaker) ? "1" : "2");
+                } else {
+                    newUtterance.setSpeaker(currentSpeaker);
+                }
+                
                 newUtterance.setText(utterance.getText());
                 newUtterance.setStartTime(utterance.getStartTime());
                 newUtterance.setEndTime(utterance.getEndTime());

@@ -1,15 +1,30 @@
 <template>
-    <div v-show="show" class="detail-container">
-        <a-card :bordered="false" class="main-card">
-            <template #extra>
-                <a-button type="link" @click="closeDetail" class="close-button">关闭</a-button>
-            </template>
-            <a-row :gutter="16" justify="center">
+    <div v-if="showDetail" class="admin-ui-main">
+        <div class="detail-container">
+            <a-card class="detail-card" :bordered="false">
+                <a-row class="xn-row">
+                    <a-col :span="18">
+                        <h3>录音详情</h3>
+                    </a-col>
+                    <a-col :span="6">
+                        <div class="xn-fdr">
+                            <a-button type="primary" danger ghost @click="handleClose">关闭</a-button>
+                        </div>
+                    </a-col>
+                </a-row>
+            </a-card>
 
+            <a-row :gutter="10" justify="center">
                 <!-- 左侧翻译结果 -->
-                <a-col :span="11">
+                <a-col :span="12">
                     <a-card title="对话内容" :bordered="false" class="content-card">
                         <template #extra>
+                            <a-switch
+                                v-model:checked="enableAudioPlay"
+                                checked-children="开启播放"
+                                un-checked-children="关闭播放"
+                                style="margin-right: 10px"
+                            />
                             <a-button
                                 type="primary"
                                 @click="handleInspect"
@@ -34,19 +49,16 @@
                                          :ref="el => dialogRefs[index] = el"
                                          :class="['message', dialog.role === 1 ? 'right' : 'left', { 'highlighted': highlightedId === index + 1 }]"
                                          :id="`dialog-${index + 1}`">
-                                        <div class="message-content">
+                                        <div class="message-content" @click="handleDialogClick(dialog)">
                                             <div class="message-header">
                                                 <div class="dialog-info">
-                                                    <span class="dialog-number">{{ index + 1 }}</span>
                                                     <span class="role">{{ dialog.role === 1 ? '客服' : '客户' }}</span>
                                                 </div>
+                                                <span class="time" :class="{ 'customer-time': dialog.role === 0, 'agent-time': dialog.role === 1 }">
+                                                    {{ formatTime(dialog.startTime) }}
+                                                </span>
                                             </div>
                                             <div class="message-text">{{ dialog.dialogText }}</div>
-                                        </div>
-                                        <div class="time-container">
-                                            <span class="time" :class="{ 'customer-time': dialog.role === 0, 'agent-time': dialog.role === 1 }">
-                                                {{ formatTime(dialog.startTime) }}
-                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -56,7 +68,7 @@
                 </a-col>
 
                 <!-- 右侧质检结果 -->
-                <a-col :span="11">
+                <a-col :span="12">
                     <a-card title="质检结果" :bordered="false" class="content-card">
                         <template #extra>
                             <a-tag :color="currentRecord.isInspected ? 'success' : 'warning'">
@@ -70,14 +82,21 @@
                                         <div class="result-section">
                                             <h3>质检总结</h3>
                                             <p>{{ inspectionResult.inspectionSummary }}</p>
-                                            <p class="score">总分：{{ inspectionResult.overallScore }}</p>
                                         </div>
                                         <div class="result-section" v-if="inspectionResult.auditResults?.length">
                                             <h3>违规详情</h3>
-                                            <div v-for="(audit, index) in inspectionResult.auditResults" :key="index">
-                                                <div v-for="(violation, vIndex) in audit.violations" :key="vIndex">
+                                            <a-collapse v-model:activeKey="activeViolationKeys">
+                                                <a-collapse-panel
+                                                    v-for="(violation, index) in inspectionResult.auditResults[0].violations"
+                                                    :key="index"
+                                                >
+                                                    <template #header>
+                                                        <span class="violation-header">
+                                                            <span class="violation-index">违规{{ index + 1 }}</span>
+                                                            <span class="violation-rule">{{ violation.rule }}</span>
+                                                        </span>
+                                                    </template>
                                                     <a-card class="violation-card">
-                                                        <p><strong>规则：</strong>{{ violation.rule }}</p>
                                                         <p><strong>描述：</strong>{{ violation.message }}</p>
                                                         <p><strong>建议：</strong>{{ violation.suggestion }}</p>
                                                         <div class="evidence-list" v-if="violation.evidence?.length">
@@ -86,13 +105,13 @@
                                                                  :key="eIndex"
                                                                  class="evidence-item"
                                                                  @click="scrollToDialog(item.dialogId)">
-                                                                <span class="dialog-badge">{{ item.dialogId }}</span>
+                                                                <span class="dialog-badge">对话{{ item.dialogId }}</span>
                                                                 <span class="evidence-content">{{ item.content }}</span>
                                                             </div>
                                                         </div>
                                                     </a-card>
-                                                </div>
-                                            </div>
+                                                </a-collapse-panel>
+                                            </a-collapse>
                                         </div>
                                     </template>
                                     <a-empty v-else description="暂无质检结果" />
@@ -102,57 +121,81 @@
                     </a-card>
                 </a-col>
             </a-row>
-        </a-card>
+        </div>
     </div>
+    <audio ref="audioPlayer" :src="currentRecord.voiceUrl" preload="auto"></audio>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
+<script setup name="voiceRecordDetail">
+import { ref, onMounted, nextTick } from 'vue'
 import { message } from 'ant-design-vue'
 import qualityApi from '@/api/inspection/qualityApi'
 import translateApi from '@/api/inspection/translateApi'
+import { formatDateTime } from '@/utils/dateUtil'
 
-const show = ref(false)
+const emit = defineEmits(['close'])
+
+const showDetail = ref(false)
 const currentRecord = ref({})
 const dialogList = ref([])
 const inspectionResult = ref(null)
 const loading = ref(false)
 const dialogRefs = ref([])
 const highlightedId = ref(null)
+const audioPlayer = ref(null)
+const enableAudioPlay = ref(false)
+const activeViolationKeys = ref(['0'])
 
-const formatTime = (seconds) => {
-    if (!seconds) return '00:00'
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = Math.floor(seconds % 60)
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+const formatTime = (milliseconds) => {
+    if (!milliseconds) return '00:00'
+    // 将毫秒转换为秒
+    const totalSeconds = Math.floor(milliseconds / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
 const openDetail = async (record) => {
+    // 重置所有相关数据
     currentRecord.value = record
-    show.value = true
+    dialogList.value = []
+    inspectionResult.value = null
+    highlightedId.value = null
+    activeViolationKeys.value = ['0']
+
+    showDetail.value = true
     await loadTranslationResult(record)
     if (record.isInspected) {
         await loadInspectionResult(record)
     }
 }
 
-const closeDetail = () => {
-    show.value = false
+const handleClose = () => {
+    // 关闭时也清空数据
+    showDetail.value = false
     currentRecord.value = {}
     dialogList.value = []
     inspectionResult.value = null
+    highlightedId.value = null
+    emit('close')
 }
 
 const scrollToDialog = (dialogId) => {
-    highlightedId.value = dialogId
-    const element = dialogRefs.value[dialogId - 1]
-    if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        // 3秒后取消高亮
-        setTimeout(() => {
-            highlightedId.value = null
-        }, 3000)
-    }
+    // 先清除之前的高亮
+    highlightedId.value = null
+
+    // 设置新的高亮
+    nextTick(() => {
+        highlightedId.value = dialogId
+        const element = dialogRefs.value[dialogId - 1]
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            // 5秒后取消高亮
+            setTimeout(() => {
+                highlightedId.value = null
+            }, 5000)
+        }
+    })
 }
 
 const loadTranslationResult = async (record) => {
@@ -198,29 +241,66 @@ const loadInspectionResult = async (record) => {
     }
 }
 
+// 直接使用毫秒级时间戳播放
+const playDialogAudio = (startTime, endTime) => {
+    const audio = audioPlayer.value
+    if (!audio) return
+
+    // 设置开始时间并播放
+    audio.currentTime = startTime / 1000
+    audio.play()
+
+    // 监听播放进度
+    const timeUpdateHandler = () => {
+        const currentTimeMs = audio.currentTime * 1000
+        if (currentTimeMs >= endTime) {
+            audio.pause()
+            audio.removeEventListener('timeupdate', timeUpdateHandler)
+        }
+    }
+
+    audio.addEventListener('timeupdate', timeUpdateHandler)
+}
+
+// 点击对话处理函数
+const handleDialogClick = (dialog) => {
+    if (!enableAudioPlay.value) return
+
+    if (dialog.startTime != null && dialog.endTime != null) {
+        playDialogAudio(dialog.startTime, dialog.endTime)
+    }
+}
+
 defineExpose({
-    openDetail,
-    closeDetail
+    openDetail
 })
 </script>
-
 <style scoped>
+.detail-card {
+    margin-bottom: 12px;
+}
+.xn-row {
+    margin-bottom: -10px;
+    margin-top: -10px;
+}
+.xn-fdr {
+    display: flex;
+    justify-content: flex-end;
+}
+
 /* 容器样式 */
 .detail-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #f0f2f5;
-    z-index: 100;
+    position: relative;
+    width: 100%;
+    height: 80%;
+    background: #fff;
     padding: 24px;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .main-card {
     height: 100%;
-    max-width: 1600px;
+    max-width: 1400px;
     margin: 0 auto;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
@@ -321,28 +401,6 @@ defineExpose({
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
-.dialog-number,
-.dialog-badge {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    line-height: 24px;
-    text-align: center;
-    background: #e6f7ff;
-    border-radius: 50%;
-    margin-right: 8px;
-    font-size: 12px;
-    color: #1890ff;
-    font-weight: bold;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.message.right .dialog-number {
-    background: #e6f7ff;
-    color: #1890ff;
-    border: 1px solid #91d5ff;
-}
-
 .message {
     display: flex;
     margin-bottom: 20px;
@@ -384,6 +442,7 @@ defineExpose({
 .message-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 6px;
     font-size: 12px;
 }
@@ -404,44 +463,31 @@ defineExpose({
 .time {
     font-size: 12px;
     color: #999;
-    display: block;
-    margin-top: 4px;
+    margin-left: 8px;
 }
 
 .customer-time {
-    text-align: right;
+    margin-right: 4px;
 }
 
 .agent-time {
-    text-align: left;
-}
-
-/* 标号样式 */
-.dialog-number,
-.dialog-badge {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    line-height: 24px;
-    text-align: center;
-    background: #e6f7ff;
-    border-radius: 50%;
-    margin-right: 8px;
-    font-size: 12px;
-    color: #1890ff;
-    font-weight: bold;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.message.right .dialog-number {
-    background: #e6f7ff;
-    color: #1890ff;
-    border: 1px solid #91d5ff;
+    margin-left: 4px;
 }
 
 /* 高亮样式 */
 .highlighted .message-content {
-    border: 2px solid #1890ff;
+    border: 2px solid #1890ff !important;
+    background-color: #e6f7ff !important;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 8px rgba(24, 144, 255, 0.3);
+}
+
+.highlighted.message.left .message-content {
+    background-color: #e6f7ff !important;
+}
+
+.highlighted.message.right .message-content {
+    background-color: #f0f9ff !important;
 }
 
 /* 动画样式 */
@@ -453,10 +499,7 @@ defineExpose({
 /* 违规卡片样式 */
 .violation-card {
     margin-bottom: 16px;
-    border: 1px solid #d9d9d9;
-    border-radius: 8px;
-    padding: 12px;
-    background: #f9f9f9;
+    border: 1px solid #f0f0f0;
 }
 
 /* 证据列表样式 */
@@ -469,18 +512,24 @@ defineExpose({
 
 /* 证据项样式 */
 .evidence-item {
-    display: flex;
-    align-items: flex-start;
-    padding: 8px;
-    margin-bottom: 8px;
-    background: #fafafa;
-    border-radius: 4px;
     cursor: pointer;
+    padding: 8px;
+    margin: 8px 0;
+    background: #f5f5f5;
+    border-radius: 4px;
     transition: all 0.3s;
 }
 
 .evidence-item:hover {
-    background: #f0f7ff;
+    background: #e6f7ff;
+}
+
+.dialog-badge {
+    background: #1890ff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-right: 8px;
 }
 
 .evidence-content {
@@ -506,10 +555,52 @@ defineExpose({
     color: #40a9ff;
 }
 
-/* 时间容器样式 */
-.time-container {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 4px;
+.message-content {
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.message-content:hover {
+    background-color: rgba(24, 144, 255, 0.1);
+}
+
+/* 违规标题样式 */
+.violation-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.violation-index {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ff4d4f;
+    display: inline-block;
+}
+
+.violation-rule {
+    font-size: 14px;
+    color: #333;
+    display: inline-block;
+}
+
+.detail-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+}
+
+.detail-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.45);
 }
 </style>
+

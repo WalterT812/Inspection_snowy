@@ -1,4 +1,4 @@
-package vip.xiaonuo.inspection.modular.translate.config;
+package vip.xiaonuo.inspection.core.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

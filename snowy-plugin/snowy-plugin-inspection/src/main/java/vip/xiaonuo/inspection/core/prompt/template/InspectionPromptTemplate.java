@@ -1,4 +1,4 @@
-package vip.xiaonuo.inspection.modular.inspection.config;
+package vip.xiaonuo.inspection.core.prompt.template;
 
 /**
  * 质检提示语模板

@@ -5,14 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vip.xiaonuo.inspection.modular.inspection.config.InspectionApiConfig;
-import vip.xiaonuo.inspection.modular.inspection.config.InspectionPromptConfig;
+import vip.xiaonuo.inspection.core.config.LlmApiConfig;
+import vip.xiaonuo.inspection.core.prompt.config.InspectionPromptConfig;
 import vip.xiaonuo.inspection.modular.inspection.dto.AuditResult;
 import vip.xiaonuo.inspection.modular.inspection.entity.InsuVoiceInspection;
 import vip.xiaonuo.inspection.modular.inspection.mapper.InsuVoiceInspectionMapper;
 import vip.xiaonuo.inspection.modular.inspection.param.InspectionParam;
 import vip.xiaonuo.inspection.modular.inspection.service.InspectionService;
-import vip.xiaonuo.inspection.modular.inspection.util.InspectionUtil;
+import vip.xiaonuo.inspection.core.util.InspectionUtil;
 import vip.xiaonuo.inspection.modular.translate.entity.InsuVoiceDialog;
 import vip.xiaonuo.inspection.modular.translate.service.InsuVoiceDialogService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -21,8 +21,8 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import java.util.*;
 
 import vip.xiaonuo.inspection.modular.inspection.service.InspectionRuleService;
-import vip.xiaonuo.inspection.modular.inspection.config.InspectionPromptTemplate;
-import vip.xiaonuo.inspection.modular.inspection.client.Ark;
+import vip.xiaonuo.inspection.core.prompt.template.InspectionPromptTemplate;
+import vip.xiaonuo.inspection.core.client.Ark;
 import vip.xiaonuo.inspection.modular.voiceRecord.entity.InsuVoiceRecord;
 import vip.xiaonuo.inspection.modular.voiceRecord.param.InsuVoiceRecordPageParam;
 import cn.hutool.core.util.ObjectUtil;
@@ -33,13 +33,14 @@ import vip.xiaonuo.common.page.CommonPageRequest;
 import cn.hutool.core.util.StrUtil;
 import vip.xiaonuo.common.enums.CommonSortOrderEnum;
 import vip.xiaonuo.common.exception.CommonException;
+import vip.xiaonuo.inspection.core.util.LoggerUtil;
 
 @Slf4j
 @Service
 public class InspectionServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, InsuVoiceRecord> implements InspectionService {
 
     @Autowired
-    private InspectionApiConfig inspectionApiConfig;
+    private LlmApiConfig llmApiConfig;
 
     @Autowired
     private InsuVoiceInspectionMapper inspectionMapper;
@@ -136,34 +137,46 @@ public class InspectionServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, In
 
         // 构建API请求参数
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", inspectionApiConfig.getModel());
-        List<Map<String, String>> messages = Arrays.asList(
-                createMessage("system", fullPrompt),
-                createMessage("user", dialogContent)
-        );
+        requestBody.put("model", llmApiConfig.getModel());
+        requestBody.put("temperature", llmApiConfig.getTemperature());
+        requestBody.put("max_tokens", llmApiConfig.getMaxTokens());
+        requestBody.put("presence_penalty", llmApiConfig.getPresencePenalty());
+        requestBody.put("frequency_penalty", llmApiConfig.getFrequencyPenalty());
+        requestBody.put("n", llmApiConfig.getN());
+        requestBody.put("stream", llmApiConfig.getStream());
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(createMessage("system", fullPrompt));
+        messages.add(createMessage("user", dialogContent));
         requestBody.put("messages", messages);
 
         // 创建 Ark 客户端
         Ark client = new Ark(
-                inspectionApiConfig.getApiKey(),
-                inspectionApiConfig.getBaseUrl(),
-                inspectionApiConfig.getTimeout(),
-                2  // max_retries
+                llmApiConfig.getApiKey(),
+                String.format("%s/%s", llmApiConfig.getBaseUrl(), llmApiConfig.getApiVersion()),
+                llmApiConfig.getTimeout(),
+                llmApiConfig.getMaxRetries()
         );
 
         try {
+            LoggerUtil.logRequest("LLM API", "Request Body", requestBody);
+            
             // 调用API并处理响应
             String response = client.chat.completions.create(
-                    inspectionApiConfig.getModel(),
+                    llmApiConfig.getModel(),
                     messages,
-                    false  // stream
+                    llmApiConfig.getStream()
             );
+            
+            LoggerUtil.logRequest("LLM API", "Response", response);
 
             AuditResult result = InspectionUtil.parseApiResponse(response);
             InspectionUtil.validateInspectionResult(result);
             return result;
+        } catch (Exception e) {
+            LoggerUtil.handleException("调用大模型API失败", e);
+            return null;
         } finally {
-            // 确保关闭客户端
             client.shutdown();
         }
     }
@@ -173,14 +186,6 @@ public class InspectionServiceImpl extends ServiceImpl<InsuVoiceRecordMapper, In
         message.put("role", role);
         message.put("content", content);
         return message;
-    }
-
-
-    private void updateInspectionStatus(Integer insuVoiceId) {
-        int updated = inspectionMapper.updateInspectionStatus(insuVoiceId, new Date());
-        if (updated == 0) {
-            throw new RuntimeException("更新质检状态失败");
-        }
     }
 
     @Override

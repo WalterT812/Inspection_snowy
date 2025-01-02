@@ -1,8 +1,9 @@
-package vip.xiaonuo.inspection.modular.inspection.config;
+package vip.xiaonuo.inspection.core.prompt.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import vip.xiaonuo.inspection.core.prompt.template.InspectionPromptTemplate;
 
 /**
  * 质检提示语配置
