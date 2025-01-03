@@ -71,7 +71,7 @@
 							<Form ref="formRef"/>
 							<a-button @click="formRef.onOpen(record)" style="color: #1890ff">编辑</a-button>
 							<a-divider type="vertical"/>
-							<a @click="openDetail(record)">详情</a>
+							<a-button @click="openDetail(record)" style="color: #1890ff">详情</a-button>
 							<a-divider type="vertical"/>
 							<a-popconfirm title="确定要删除吗？" @confirm="deleteInsuVoiceRecord(record)">
 								<a-button>删除</a-button>
@@ -80,7 +80,6 @@
 					</template>
 				</template>
 			</s-table>
-
 		</a-card>
 
 		<!-- 详情页面 -->
