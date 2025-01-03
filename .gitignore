@@ -35,3 +35,6 @@ tmp/
 
 ### cursor ###
 .cursorrules
+
+### vscode ###
+.vscode
